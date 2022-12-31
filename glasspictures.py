@@ -7,7 +7,7 @@ if not path.exists(path.join(path.curdir, 'data', 'tmp')):
     os.mkdir(path.join(path.curdir, 'data', 'tmp'))
 
 
-def wrap_text(text: str, font: ImageFont.ImageFont, line_length: int):
+def wrap_text(text: str, font: ImageFont.ImageFont, line_length: int, max_height:int):
     lines = ['']
     for word in text.split():
         line = f'{lines[-1]} {word}'.strip()
@@ -15,18 +15,27 @@ def wrap_text(text: str, font: ImageFont.ImageFont, line_length: int):
             lines[-1] = line
         else:
             lines.append(word)
-    if '\n'.join(lines) == '':
+    out = '\n'.join(lines)
+    if out == '':
         raise UserWarning('Invalid text.')
-    elif len(lines) > 5:
+    elif len(lines) * font.getbbox(out)[3] > max_height:
         raise UserWarning('Input length too long.')
-    return '\n'.join(lines)
+    return out
 
 
-def downey_meme(text):
+def downey_meme(text, fnt_size=48):
+    if text == '':
+        raise UserWarning('No text given.')
     downey = Image.open(path.join(path.curdir, 'data', 'images', 'downey.jpg'))
     downey_draw = ImageDraw.Draw(downey)
-    fnt = ImageFont.truetype('arialbd.ttf', 48)
-    wrapped_text = wrap_text(text, fnt, 500)
+    fnt = ImageFont.truetype('arialbd.ttf', fnt_size)
+    try:
+        wrapped_text = wrap_text(text, fnt, 500, 240)
+    except UserWarning:
+        if fnt_size >= 8:
+            return downey_meme(text, fnt_size - 1)
+        else:
+            raise UserWarning('Input length too long.')
     downey_draw.text((100, 150), wrapped_text, font=fnt, fill=(0, 0, 0))
     fp = path.join(path.curdir, 'data', 'tmp', 'tmp_downey.jpg')
     downey.save(fp)
