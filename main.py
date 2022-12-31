@@ -14,7 +14,7 @@ intents.message_content = True
 glass = commands.Bot(command_prefix='$', intents=intents)
 
 rand = random.Random()
-s_trouble = script.Script('scripts/trouble.txt')
+s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
 last_channel = None
 last_server = None
 
@@ -70,7 +70,7 @@ async def shawty_message(message: discord.Message):
     if message.channel.id == 917229423311331348:
         return
 
-    # Mika's swear jar
+    # Mag's swear jar
     if message.author.id == 895809582058831882:
         for swear in [' fuck', ' ass', ' shit', ' bitch', ' cunt']:
             if swear in ' '+message.content.lower():

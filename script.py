@@ -1,3 +1,6 @@
+from os import path
+
+
 class Script:
     lines = []
     index = 0
@@ -18,15 +21,15 @@ class Script:
         text = self.sanitize(text)
         line = self.sanitize(self.lines[self.index])
         error_count = 0
-        textBroke = text.split(' ')
-        lineBroke = line.split(' ')
-        if len(lineBroke) < len(textBroke):
+        text_broke = text.split(' ')
+        line_broke = line.split(' ')
+        if len(line_broke) < len(text_broke):
             self.nextline()
-            lineBroke.extend(self.sanitize(self.lines[self.index]).split(' '))
-        if len(lineBroke) > len(textBroke):
+            line_broke.extend(self.sanitize(self.lines[self.index]).split(' '))
+        if len(line_broke) > len(text_broke):
             return False
-        for i in range(len(lineBroke)):
-            if textBroke[i] != lineBroke[i]:
+        for i in range(len(line_broke)):
+            if text_broke[i] != line_broke[i]:
                 error_count += 1
         return error_count < 3
 
@@ -42,8 +45,9 @@ class Script:
         self.index = 0
 
 
+# Debug. Just testing the functions.
 if __name__ == '__main__':
-    sc = Script('scripts/trouble.txt')
+    sc = Script(path.join(path.curdir, 'data', 'scripts', 'trouble.txt'))
     match = True
     while match and sc.has_next():
         print(sc.nextline())
@@ -53,3 +57,4 @@ if __name__ == '__main__':
             match = True
         else:
             match = False
+            
