@@ -1,6 +1,10 @@
 # Picture editing section of Glassbox
+import os
 from os import path
 from PIL import Image, ImageDraw, ImageFont
+
+if not path.exists(path.join(path.curdir, 'data', 'tmp')):
+    os.mkdir(path.join(path.curdir, 'data', 'tmp'))
 
 
 def wrap_text(text: str, font: ImageFont.ImageFont, line_length: int):
@@ -27,6 +31,3 @@ def downey_meme(text):
     fp = path.join(path.curdir, 'data', 'tmp', 'tmp_downey.jpg')
     downey.save(fp)
     return fp
-
-
-downey_meme('Willy Wonka is responsible for innumerable counts of negligence')

@@ -7,6 +7,8 @@ class GlassConsole:
     root_alias = '~'
 
     def __init__(self, server_id: int):
+        if not p.exists(p.join(p.curdir, 'data', 'serverfiles', str(server_id))):
+            os.makedirs(p.join(p.curdir, 'data', 'serverfiles', str(server_id)))
         self.root = p.join(p.curdir, 'data', 'serverfiles', str(server_id))
         self.folder = ''
 

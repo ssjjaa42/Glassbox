@@ -224,6 +224,12 @@ async def on_message(message):
     await glass.process_commands(message)
 
 if __name__ == '__main__':
+    if not os.path.exists('token.txt'):
+        with open('token.txt', 'x') as f:
+            f.close()
     with open('token.txt', 'r') as f:
         token = f.read()
-    glass.run(token)
+    try:
+        glass.run(token)
+    except discord.errors.LoginFailure as e:
+        print(e)
