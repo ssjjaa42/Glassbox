@@ -1,5 +1,5 @@
-# Glassbox v1.0
-# by me
+# Glassbox
+# by ssjjaa
 
 import os
 import random
