@@ -205,6 +205,35 @@ async def downey(ctx: discord.ext.commands.Context, *, text=''):
         await ctx.send(str(e))
 
 
+@glass.command()
+async def inspirational(ctx: discord.ext.commands.Context, *, text=''):
+    if len(ctx.message.attachments) > 1:
+        await ctx.send('Too many images attached!')
+        return
+    elif len(ctx.message.attachments) == 1:
+        image_url = str(ctx.message.attachments[0])
+    elif len(ctx.message.attachments) == 0 and text.startswith('https://'):
+        words = text.split(' ')
+        image_url = words[0]
+        words.pop(0)
+        text = ' '.join(words)
+    else:
+        await ctx.send('No image provided!')
+        return
+    parts = text.split('|')
+    header = parts[0].strip()
+    body = ''
+    if len(parts) > 1:
+        body = parts[1].strip()
+    try:
+        await ctx.message.delete()
+        async with ctx.typing():
+            pic_path = glasspictures.inspirational_meme(image_url, header, body)
+        await ctx.send(file=discord.File(pic_path))
+    except UserWarning as e:
+        await ctx.send(str(e))
+
+
 @glass.event
 async def on_message(message):
     # Print message
