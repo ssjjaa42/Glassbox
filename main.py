@@ -161,8 +161,8 @@ async def cd(ctx, *, arg=''):
         return
     try:
         consoles[ctx.guild.id].cd(arg)
-    except NotADirectoryError as e:
-        await ctx.send(e)
+    except NotADirectoryError as exception:
+        await ctx.send(exception)
     await ctx.send('```\n'+str(consoles[ctx.guild.id])+'\n```')
 
 
@@ -201,8 +201,8 @@ async def downey(ctx: discord.ext.commands.Context, *, text=''):
         pic_path = glasspictures.downey_meme(text)
         await ctx.message.delete()
         await ctx.send(file=discord.File(pic_path))
-    except UserWarning as e:
-        await ctx.send(str(e))
+    except UserWarning as exception:
+        await ctx.send(str(exception))
 
 
 @glass.command()
@@ -230,8 +230,8 @@ async def inspirational(ctx: discord.ext.commands.Context, *, text=''):
         async with ctx.typing():
             pic_path = glasspictures.inspirational_meme(image_url, header, body)
         await ctx.send(file=discord.File(pic_path))
-    except UserWarning as e:
-        await ctx.send(str(e))
+    except UserWarning as exception:
+        await ctx.send(str(exception))
 
 
 @glass.event

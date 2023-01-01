@@ -2,6 +2,7 @@
 import os
 from os import path
 import urllib.request
+import PIL
 from PIL import Image, ImageDraw, ImageFont
 
 if not path.exists(path.join(path.curdir, 'data', 'tmp')):
@@ -43,12 +44,15 @@ def downey_meme(text, fnt_size=48):
     return fp
 
 
-def inspirational_meme(image_url, header='', body='', head_size=120, body_size=120):
+def inspirational_meme(image_url, header='', body=''):
     if header == '':
         raise UserWarning('No caption provided!')
     req = urllib.request.Request(url=image_url, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req) as url:
-        image = Image.open(url)
+        try:
+            image = Image.open(url)
+        except PIL.UnidentifiedImageError:
+            raise UserWarning('Invalid image!')
     canvas = Image.new('RGB', (round(image.size[0]*1.3) + 60, round(image.size[1]*1.3) + 60))
     draw = ImageDraw.Draw(canvas)
     x = canvas.size[0]
