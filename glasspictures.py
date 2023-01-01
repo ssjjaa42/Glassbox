@@ -30,7 +30,7 @@ def downey_meme(text, fnt_size=48):
         raise UserWarning('No text given.')
     downey = Image.open(path.join(path.curdir, 'data', 'images', 'downey.jpg'))
     downey_draw = ImageDraw.Draw(downey)
-    fnt = ImageFont.truetype('arialbd.ttf', fnt_size)
+    fnt = ImageFont.truetype(path.join('data', 'fonts', 'arialbd.ttf'), fnt_size)
     try:
         wrapped_text = wrap_text(text, fnt, 500, 240)
     except UserWarning:
@@ -65,7 +65,7 @@ def inspirational_meme(image_url, header='', body=''):
         (corner_x + image.size[0] + offset, corner_y + image.size[1] + offset)
     ), fill=(0, 0, 0), outline=(240, 240, 240), width=5)
     canvas.paste(image, (corner_x, corner_y))
-    fnt_head = ImageFont.truetype('times.ttf', round(0.11*y*0.75))
+    fnt_head = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), round(0.11*y*0.75))
     fnt_body = ImageFont.truetype('times.ttf', round(0.07*y*0.75))
     draw.text(
         xy=(round(x / 2), round(corner_y + image.size[1] + offset)),
