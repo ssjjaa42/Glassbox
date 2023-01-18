@@ -123,10 +123,8 @@ async def shawty_message(message: discord.Message):
        message.content.lower().startswith('im ') or \
        message.content.lower().startswith('i’m '):
         if len(message.content) < 30:
-            # 1 in 2 chance
-            if rand.random() < 0.5:
-                name = message.content.lower().split(' ', 1)[1].capitalize()
-                await message.channel.send(f'Hi {name}, I\'m Glassbox!')
+            name = message.content.lower().split(' ', 1)[1].capitalize()
+            await message.channel.send(f'Hi {name}, I\'m Glassbox!')
 
     # ash moment
     if message.author.id == 412713124077109249:
