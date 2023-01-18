@@ -49,19 +49,20 @@ async def atr2message(message: discord.Message):
         await message.channel.send(f'Hello, {message.author.display_name}.')
 
     # Be dad
-    if message.content.lower().startswith('i\'m ') or message.content.lower().startswith('im '):
+    if message.content.lower().startswith('i\'m ') or \
+       message.content.lower().startswith('im ') or \
+       message.content.lower().startswith('i’m '):
         if len(message.content) < 30:
-            if rand.random() < 40:
-                name = message.content.lower().split(' ', 1)[1].capitalize()
-                await message.channel.send(f'Hi {name}, I\'m The Borg!')
+            name = message.content.lower().split(' ', 1)[1].capitalize()
+            await message.channel.send(f'Hi {name}, I\'m The Borg!')
 
     # kink moment
     if message.author.id == 720442589584556034:
-        if rand.random() < 0.2:
+        if rand.random() < 0.125:
             await message.add_reaction('<:bonus_chromosome:1011729141151830047>')
     # fork moment
     if message.author.id == 738020641269219329:
-        if rand.random() < 0.125:
+        if rand.random() < 0.0625:
             await message.add_reaction('<:redditor:741101661170302987>')
 
 
@@ -118,7 +119,9 @@ async def shawty_message(message: discord.Message):
                                    '/do_not_push_the_button.mp4')
 
     # Be dad
-    if message.content.lower().startswith('i\'m ') or message.content.lower().startswith('im '):
+    if message.content.lower().startswith('i\'m ') or \
+       message.content.lower().startswith('im ') or \
+       message.content.lower().startswith('i’m '):
         if len(message.content) < 30:
             # 1 in 2 chance
             if rand.random() < 0.5:
