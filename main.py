@@ -202,6 +202,23 @@ async def upload(ctx, path=''):
 
 
 @glass.command()
+async def roll(ctx: discord.ext.commands.Context, *, text=''):
+    try:
+        text = text.lower().replace('d', ' ')
+        text = text.replace('+', ' ')
+        parts = text.split()
+        num = int(parts[0])
+        sides = int(parts[1])
+        modifier = 0
+        if len(parts) > 2:
+            modifier = int(parts[2])
+        roll = num * sides + modifier
+        await ctx.send(str(roll))
+    except Exception:
+        await ctx.send('Invalid input! Try "$roll 1d6"')
+
+
+@glass.command()
 async def downey(ctx: discord.ext.commands.Context, *, text=''):
     try:
         pic_path = glasspictures.downey_meme(text)
