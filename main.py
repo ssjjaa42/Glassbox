@@ -49,7 +49,9 @@ async def atr2message(message: discord.Message):
         await message.channel.send(f'Hello, {message.author.display_name}.')
 
     # Be dad
-    if message.content.lower().startswith('i\'m ') or message.content.lower().startswith('im '):
+    if message.content.lower().startswith('i\'m ') or \
+       message.content.lower().startswith('im ') or \
+       message.content.lower().startswith('i’m '):
         if len(message.content) < 30:
             if rand.random() < 40:
                 name = message.content.lower().split(' ', 1)[1].capitalize()
