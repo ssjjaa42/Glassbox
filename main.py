@@ -74,7 +74,8 @@ async def shawty_message(message: discord.Message):
     if message.author.id == 895809582058831882:
         for swear in [' fuck', ' ass', ' shit', ' bitch', ' cunt']:
             if swear in ' '+message.content.lower():
-                await message.reply('Plonk!')
+                # await message.reply('Plonk!')
+                pass
 
     # Be my friend
     trouble = s_trouble
@@ -119,7 +120,8 @@ async def shawty_message(message: discord.Message):
     # Be dad
     if message.content.lower().startswith('i\'m ') or message.content.lower().startswith('im '):
         if len(message.content) < 30:
-            if rand.random() < 40:
+            # 1 in 2 chance
+            if rand.random() < 0.5:
                 name = message.content.lower().split(' ', 1)[1].capitalize()
                 await message.channel.send(f'Hi {name}, I\'m Glassbox!')
 
@@ -127,15 +129,18 @@ async def shawty_message(message: discord.Message):
     if message.author.id == 412713124077109249:
         if 'florida' in message.content.lower() or 'floridian' in message.content.lower():
             await message.add_reaction('🐊')
-        elif rand.random() < 0.125:
+        # 1 in 16 chance
+        elif rand.random() < 0.0625:
             await message.add_reaction('<:frogpog:1005330533544370238>')
     # magment
     if message.author.id == 895809582058831882:
-        if rand.random() < 0.125:
+        # 1 in 16 chance
+        if rand.random() < 0.0625:
             await message.add_reaction('<:cat_eyebrowraise:1037610737947906079>')
     # steve moment
     if message.author.id == 913183576281997332:
-        if rand.random() < 0.125:
+        # 1 in 16 chance
+        if rand.random() < 0.0625:
             if rand.random() < 0.5:
                 await message.add_reaction('<:huh:1005333474430963753>')
             else:
