@@ -20,6 +20,10 @@ last_server = None
 
 
 def sanitize_text(text: str):
+    """Take a raw string and replace unwanted characters with spaces.
+
+    Unwanted characters are defined in this function.
+    """
     for c in '`\n':
         text = text.replace(c, ' ')
     text = text.strip()
@@ -28,6 +32,7 @@ def sanitize_text(text: str):
 
 @glass.event
 async def on_guild_join(guild):
+    """Sets up the data folder when joining a new server."""
     root_path = os.path.join(os.path.curdir, 'data', 'serverfiles')
     target_path = os.path.join(root_path, str(guild.id))
     if not os.path.exists(target_path):
@@ -35,6 +40,7 @@ async def on_guild_join(guild):
 
 
 async def print_message(message: discord.Message):
+    """Prints a message to the log, sanitizing it first. Also prints the author, current server and channel."""
     global last_channel
     if message.channel != last_channel:
         print(message.guild.name, '/', message.channel.name)
@@ -43,6 +49,10 @@ async def print_message(message: discord.Message):
 
 
 async def atr2message(message: discord.Message):
+    """ATR2 specific actions.
+
+    Includes Say Hi, Be Dad, Kink and Fork stuff.
+    """
     global rand
     # Say hi
     if message.content == '<@1042577738436980877>':
@@ -67,6 +77,11 @@ async def atr2message(message: discord.Message):
 
 
 async def shawty_message(message: discord.Message):
+    """The Shawty Verse-specific stuff.
+
+    Includes Do Not Enter Vents, Plonk, Trouble, predefined responses, Screech, Be Dad,
+    and Ash, Steve, and Mag-specific stuff.
+    """
     # Keep out of the stormy garden
     if message.channel.id == 917229423311331348:
         return
@@ -150,6 +165,10 @@ async def shawty_message(message: discord.Message):
 
 @glass.event
 async def on_ready():
+    """Boot actions. Set game and status.
+
+    This should only run once. I'm not sure if it actually will, though.
+    """
     print(f'Connected as {glass.user}!')
     game = discord.Activity(type=discord.ActivityType.watching, name='myself think', state='It\'s dark in here')
     await glass.change_presence(status=discord.Status.do_not_disturb, activity=game)
@@ -159,12 +178,16 @@ consoles = {}
 
 @glass.command()
 async def cd(ctx, *, arg=''):
-    """Change the directory."""
+    """Change the directory, and output the new working path."""
+    # Obligatory check to see if the console is initialized yet
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+
+    # TODO take this out, make a $pwd function and get this to set the current directory to ~ instead
     if arg == '':
         await ctx.send('```\n'+str(consoles[ctx.guild.id])+'\n```')
         return
+
     try:
         consoles[ctx.guild.id].cd(arg)
     except NotADirectoryError as exception:
@@ -174,9 +197,11 @@ async def cd(ctx, *, arg=''):
 
 @glass.command()
 async def ls(ctx):
-    """List the contents of the current directory."""
+    """List the contents of the working directory."""
+    # Obligatory check to see if the console is initialized yet
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+
     contents = consoles[ctx.guild.id].ls()
     out = '```\n'
     for filename in contents:
@@ -189,11 +214,16 @@ async def ls(ctx):
 
 @glass.command()
 async def upload(ctx, path=''):
+    """Upload a file from the system."""
+    # Obligatory check to see if the console is initialized yet
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+
+    # FIXME should this check be done with path or new_path?
     if os.path.normpath(path).startswith('..'):
         await ctx.send('Invalid path. Bad user!')
         return
+
     new_path = os.path.join(consoles[ctx.guild.id].get_path(), path)
     if os.path.isfile(new_path):
         await ctx.send(file=discord.File(new_path))
@@ -203,23 +233,33 @@ async def upload(ctx, path=''):
 
 @glass.command()
 async def roll(ctx: discord.ext.commands.Context, *, text=''):
+    """Roll a n-sided die, with optional modifier.
+
+    Format is $roll NdS, or $roll NdS+M. Negative modifiers work.
+    """
     try:
+        # 2d6+2 becomes 2 6 2
+        # 2d6-3 becomes 2 6 -3
         text = text.lower().replace('d', ' ')
         text = text.replace('+', ' ')
+        text = text.replace('-', ' -')
         parts = text.split()
         num = int(parts[0])
         sides = int(parts[1])
         modifier = 0
         if len(parts) > 2:
             modifier = int(parts[2])
-        roll = num * sides + modifier
-        await ctx.send(str(roll))
-    except Exception:
-        await ctx.send('Invalid input! Try "$roll 1d6"')
+        await ctx.send(str(num * sides + modifier))
+    # FIXME replace Exception with something more specific
+    except Exception as error:
+        await ctx.send('Invalid input! Try \"$roll 1d6\"')
+        # TODO remove after testing of this function is complete
+        await ctx.send('<@913183576281997332> '+str(error))
 
 
 @glass.command()
 async def downey(ctx: discord.ext.commands.Context, *, text=''):
+    """Robert Downey, Jr. Explaining meme generator."""
     try:
         pic_path = glasspictures.downey_meme(text)
         await ctx.message.delete()
@@ -230,6 +270,12 @@ async def downey(ctx: discord.ext.commands.Context, *, text=''):
 
 @glass.command()
 async def inspirational(ctx: discord.ext.commands.Context, *, text=''):
+    """Inspirational meme generator.
+
+    Can take image inputs from an attachment or a direct URL at the start of the command invocation.
+    A pipe character ('|') divides the top row of text from the bottom row.
+    The bottom row of text (and the pipe character) is optional.
+    """
     if len(ctx.message.attachments) > 1:
         await ctx.send('Too many images attached!')
         return
@@ -259,6 +305,11 @@ async def inspirational(ctx: discord.ext.commands.Context, *, text=''):
 
 @glass.event
 async def on_message(message):
+    """Message handler. Does things, and then runs it through the command system.
+
+    To be clear, things in this message run BEFORE any command runs.
+    This method catches bot messages and does not do anything with them besides print them.
+    """
     # Print message
     await print_message(message)
     # Do nothing if the message is from us or another bot
@@ -281,7 +332,10 @@ if __name__ == '__main__':
             f.close()
     with open('token.txt', 'r') as f:
         token = f.read()
+        if token == '':
+            print("No token! Please put a login token in token.txt")
+            exit(0)
     try:
         glass.run(token)
-    except discord.errors.LoginFailure as e:
-        print(e)
+    except discord.errors.LoginFailure as error:
+        print(error)
