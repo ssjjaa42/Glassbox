@@ -68,7 +68,11 @@ class GlassConsole:
             raise FileNotFoundError('Invalid path.')
         # Check to see if the file exists
         if p.isfile(p.join(self.root, target_path)):
-            return p.join(self.root, target_path)
+            # Send no file if the target is hidden (starts with .)
+            if p.split(p.join(self.root, target_path))[1].startswith('.'):
+                raise FileNotFoundError('File not found.')
+            else:
+                return p.join(self.root, target_path)
         else:
             raise FileNotFoundError('File not found.')
 
@@ -82,8 +86,9 @@ class GlassConsole:
 
     def ls(self):
         """Lists the contents of the current folder, or the target folder, if it exists."""
-        folders = [(f+'/') for f in os.listdir(self.get_path()) if os.path.isdir(os.path.join(self.get_path(), f))]
-        files = [f for f in os.listdir(self.get_path()) if os.path.isfile(os.path.join(self.get_path(), f))]
+        folders = [(f+'/') for f in os.listdir(self.get_path()) if p.isdir(p.join(self.get_path(), f))]
+        files = [f for f in os.listdir(self.get_path()) if p.isfile(p.join(self.get_path(), f))
+                 and not f.startswith('.')]  # Hide hidden files (name starts with .)
         folders.extend(files)
         return folders
 

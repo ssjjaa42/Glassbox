@@ -148,11 +148,8 @@ async def roll(ctx: discord.ext.commands.Context, *, text=''):
             await ctx.send(rolls+' ('+str(modifier)+'): **'+str(total)+'**')
         else:
             await ctx.send(rolls+': **'+str(total)+'**')
-    # FIXME replace Exception with something more specific
-    except Exception as exception:
+    except (IndexError, ValueError):
         await ctx.send('Invalid input! Try \"$roll 1d6\"')
-        # remove this after Exception is replaced
-        await ctx.send('<@913183576281997332> '+str(exception))
 
 
 @glass.command()
