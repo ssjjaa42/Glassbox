@@ -185,16 +185,11 @@ async def cd(ctx, *, arg=''):
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
 
-    # TODO take this out, make a $pwd function and get this to set the current directory to ~ instead
-    if arg == '':
-        await ctx.send('```\n'+str(consoles[ctx.guild.id])+'\n```')
-        return
-
     try:
         consoles[ctx.guild.id].cd(arg)
     except NotADirectoryError as exception:
         await ctx.send(exception)
-    await ctx.send('```\n'+str(consoles[ctx.guild.id])+'\n```')
+    await ctx.send('```'+str(consoles[ctx.guild.id])+'```')
 
 
 @glass.command()
@@ -213,6 +208,14 @@ async def ls(ctx):
         out = '```\n \n```'
     await ctx.send(out)
 
+
+@glass.command()
+async def pwd(ctx):
+    """Outputs the current working directory."""
+    # Obligatory check to see if the console is initialized yet
+    if ctx.guild.id not in consoles:
+        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+    await ctx.send('```'+consoles[ctx.guild.id].pwd()+'```')
 
 @glass.command()
 async def upload(ctx, path=''):
