@@ -122,8 +122,10 @@ async def shawty_message(message: discord.Message):
                                            '/901916671105708102/Big_Iron-3.mp4',
         '<@1042577738436980877> shrek': 'https://cdn.discordapp.com/attachments/704856529840504863'
                                         '/707960111553052732/full-shrek1.webm',
-        '<@1042577738436980877> sonic': 'https://cdn.discordapp.com/attachments/832423825076912128'
-                                        '/846624638981242900/Sonic_The_Hedgehog.mp4 '
+        '<@1042577738436980877> puss in boots': 'https://stolen.shoes/embedVideo?video=https://b2.thefileditch.ch/'
+                                                'jdmYNfXxTCPUGAlwLnHq.mp4&image=https://www.hollywoodreporter.com/'
+                                                'wp-content/uploads/2022/11/'
+                                                'Puss-in-Boots-The-Last-Wish-Everett-H-2022.jpg?w=1296'
     }
     if message.content.lower() in responses:
         await message.channel.send(responses[message.content.lower()])
