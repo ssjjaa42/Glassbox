@@ -70,9 +70,9 @@ async def cd(ctx, *, arg=''):
 
     try:
         consoles[ctx.guild.id].cd(arg)
+        await ctx.send('```'+str(consoles[ctx.guild.id])+'```')
     except NotADirectoryError as exception:
         await ctx.send(exception)
-    await ctx.send('```'+str(consoles[ctx.guild.id])+'```')
 
 
 @glass.command()
@@ -98,6 +98,7 @@ async def pwd(ctx):
     # Obligatory check to see if the console is initialized yet
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+
     await ctx.send('```'+consoles[ctx.guild.id].pwd()+'```')
 
 
@@ -108,16 +109,10 @@ async def upload(ctx, path=''):
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
 
-    # FIXME should this check be done with path or new_path?
-    if os.path.normpath(path).startswith('..'):
-        await ctx.send('Invalid path. Bad user!')
-        return
-
-    new_path = os.path.join(consoles[ctx.guild.id].get_path(), path)
-    if os.path.isfile(new_path):
-        await ctx.send(file=discord.File(new_path))
-    else:
-        await ctx.send('Invalid path.')
+    try:
+        await ctx.send(file=discord.File(consoles[ctx.guild.id].retrieve_file(path)))
+    except FileNotFoundError as exception:
+        await ctx.send(str(exception))
 
 
 @glass.command()
@@ -303,6 +298,10 @@ async def on_message(message):
     if message.author.id == 738020641269219329:
         if rand.random() < 0.0625:  # 1 in 16 chance
             await message.add_reaction('<:redditor:741101661170302987>')
+    # scott.png
+    if message.author.id == 306196186803601409:
+        if rand.random() < 0.0625:  # 1 in 16 chance
+            await message.add_reaction('<:highsoldier:1066767768042610768>')
 
     # Mandatory line to make commands work
     await glass.process_commands(message)

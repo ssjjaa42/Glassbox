@@ -47,6 +47,31 @@ class GlassConsole:
         else:
             raise NotADirectoryError('Invalid path.')
 
+    def retrieve_file(self, path: str):
+        """Given a relative path to a file, return the actual path to that file, if it exists."""
+        for c in '~:?*':
+            if c in path[2:]:
+                print("A")
+                raise FileNotFoundError('Invalid path.')
+        if path.startswith('~'):
+            path = path[2:]
+            print(path)
+            target_path = p.relpath(p.abspath(p.join(self.root, path)), start=p.abspath(self.root))
+        elif path.startswith('~/'):
+            path = path[3:]
+            print(path)
+            target_path = p.relpath(p.abspath(p.join(self.root, path)), start=p.abspath(self.root))
+        else:
+            target_path = p.relpath(p.abspath(p.join(self.root, self.folder, path)), start=p.abspath(self.root))
+        # Stop them if they're trying to escape their data folder
+        if target_path.startswith('.'):
+            raise FileNotFoundError('Invalid path.')
+        # Check to see if the file exists
+        if p.isfile(p.join(self.root, target_path)):
+            return p.join(self.root, target_path)
+        else:
+            raise FileNotFoundError('File not found.')
+
     def get_path(self):
         """Prints the path to the working directory, relative to the root data folder."""
         return p.normpath(p.join(self.root, self.folder))
