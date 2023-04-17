@@ -251,12 +251,26 @@ async def roll(ctx: discord.ext.commands.Context, *, text=''):
         modifier = 0
         if len(parts) > 2:
             modifier = int(parts[2])
-        await ctx.send(str(num * sides + modifier))
+        total = 0
+        rolls = ''
+        for i in range(num):
+            roll = rand.randint(1, sides)
+            total += roll
+            rolls += str(roll)
+            if i+1 < num:
+                rolls += ', '
+        total += modifier
+        if modifier > 0:
+            await ctx.send(rolls+' (+'+str(modifier)+'): **'+str(total)+'**')
+        elif modifier < 0:
+            await ctx.send(rolls+' ('+str(modifier)+'): **'+str(total)+'**')
+        else:
+            await ctx.send(rolls+': **'+str(total)+'**')
     # FIXME replace Exception with something more specific
-    except Exception as error:
+    except Exception as exception:
         await ctx.send('Invalid input! Try \"$roll 1d6\"')
         # TODO remove after testing of this function is complete
-        await ctx.send('<@913183576281997332> '+str(error))
+        await ctx.send('<@913183576281997332> '+str(exception))
 
 
 @glass.command()
@@ -339,5 +353,5 @@ if __name__ == '__main__':
             exit(0)
     try:
         glass.run(token)
-    except discord.errors.LoginFailure as error:
-        print(error)
+    except discord.errors.LoginFailure as login_error:
+        print(login_error)
