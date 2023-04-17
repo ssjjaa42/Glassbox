@@ -156,7 +156,7 @@ async def roll(ctx: discord.ext.commands.Context, *, text=''):
     # FIXME replace Exception with something more specific
     except Exception as exception:
         await ctx.send('Invalid input! Try \"$roll 1d6\"')
-        # TODO remove after testing of this function is complete
+        # remove this after Exception is replaced
         await ctx.send('<@913183576281997332> '+str(exception))
 
 
@@ -262,18 +262,20 @@ async def on_message(message):
             await message.channel.send(f'Hi {name}, I\'m '+my_name+'!')
 
     # Be my friend
-    trouble = s_trouble
-    if message.content.lower() == 'trouble':
-        await message.channel.send('Are you Mr. Dunlop?')
-    if trouble.eval(message.content) and trouble.has_next():
-        trouble.nextline()
-        if trouble.has_next():
-            await message.channel.send(trouble.nextline())
-        else:
-            trouble.reset()
-        return
-    else:
-        trouble.reset()
+    # TODO amend script reading. I have disabled it until I decide to work on it again.
+    # It needs to have the ability to not be so exacting, completing lines if the human stops partway through.
+    # trouble = s_trouble
+    # if message.content.lower() == 'trouble':
+    #     await message.channel.send('Are you Mr. Dunlop?')
+    # if trouble.eval(message.content) and trouble.has_next():
+    #     trouble.nextline()
+    #     if trouble.has_next():
+    #         await message.channel.send(trouble.nextline())
+    #     else:
+    #         trouble.reset()
+    #     return
+    # else:
+    #     trouble.reset()
 
     global rand
     # ash moment
