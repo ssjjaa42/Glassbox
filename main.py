@@ -48,123 +48,6 @@ async def print_message(message: discord.Message):
     print(f'\t{message.author.display_name}: {sanitize_text(message.content)}')
 
 
-async def atr2message(message: discord.Message):
-    """ATR2 specific actions.
-
-    Includes Say Hi, Be Dad, Kink and Fork stuff.
-    """
-    global rand
-    # Say hi
-    if message.content == '<@1042577738436980877>':
-        await message.channel.send(f'Hello, {message.author.display_name}.')
-
-    # Be dad
-    if message.content.lower().startswith('i\'m ') or \
-       message.content.lower().startswith('im ') or \
-       message.content.lower().startswith('i’m '):
-        if len(message.content) < 30:
-            name = message.content.lower().split(' ', 1)[1].capitalize()
-            await message.channel.send(f'Hi {name}, I\'m The Borg!')
-
-    # kink moment
-    if message.author.id == 720442589584556034:
-        if rand.random() < 0.125:
-            await message.add_reaction('<:bonus_chromosome:1011729141151830047>')
-    # fork moment
-    if message.author.id == 738020641269219329:
-        if rand.random() < 0.0625:
-            await message.add_reaction('<:redditor:741101661170302987>')
-
-
-async def shawty_message(message: discord.Message):
-    """The Shawty Verse-specific stuff.
-
-    Includes Do Not Enter Vents, Plonk, Trouble, predefined responses, Screech, Be Dad,
-    and Ash, Steve, and Mag-specific stuff.
-    """
-    # Keep out of the stormy garden
-    if message.channel.id == 917229423311331348:
-        return
-
-    # Mag's swear jar
-    if message.author.id == 895809582058831882:
-        for swear in [' fuck', ' ass', ' shit', ' bitch', ' cunt']:
-            if swear in ' '+message.content.lower():
-                # await message.reply('Plonk!')
-                pass
-
-    # Be my friend
-    trouble = s_trouble
-    if message.content.lower() == 'trouble':
-        await message.channel.send('Are you Mr. Dunlop?')
-    if trouble.eval(message.content) and trouble.has_next():
-        trouble.nextline()
-        if trouble.has_next():
-            await message.channel.send(trouble.nextline())
-        else:
-            trouble.reset()
-        return
-    else:
-        trouble.reset()
-
-    global rand
-    # Try responding automatically
-    responses = {
-        '<@1042577738436980877> caramelldansen': 'https://www.youtube.com/watch?v=qz2Ihbm_Mz0',
-        '<@1042577738436980877>': f'Hello, {message.author.display_name}.',
-        '<@1042577738436980877> l': 'https://cdn.discordapp.com/attachments/546898644947828756/941466286448332800'
-                                    '/2845e155a573a63eb0ded10d83ec5b1b13bf9c30c71819728c207b1c4e73a038_1.png',
-        'dead chat': 'https://tenor.com/view/undertale-papyrus-undertale-papyrus-dead-chat-dead-chat-xd-gif'
-                     '-25913129',
-        '<@1042577738436980877> who\'s on first': 'https://cdn.discordapp.com/attachments/678305861978030081'
-                                                  '/928228137333051402/hstrhtr.mp4',
-        '<@1042577738436980877> big iron': 'https://cdn.discordapp.com/attachments/525830406776553492'
-                                           '/901916671105708102/Big_Iron-3.mp4',
-        '<@1042577738436980877> shrek': 'https://cdn.discordapp.com/attachments/704856529840504863'
-                                        '/707960111553052732/full-shrek1.webm',
-        '<@1042577738436980877> puss in boots': 'https://stolen.shoes/embedVideo?video=https://b2.thefileditch.ch/'
-                                                'jdmYNfXxTCPUGAlwLnHq.mp4&image=https://www.hollywoodreporter.com/'
-                                                'wp-content/uploads/2022/11/'
-                                                'Puss-in-Boots-The-Last-Wish-Everett-H-2022.jpg?w=1296'
-    }
-    if message.content.lower() in responses:
-        await message.channel.send(responses[message.content.lower()])
-
-    # Screech
-    if '<@1042577738436980877>' in message.content and len(message.content) > 100:
-        await message.channel.send('https://cdn.discordapp.com/attachments/740284671535087745/974198322439028736'
-                                   '/do_not_push_the_button.mp4')
-
-    # Be dad
-    if message.content.lower().startswith('i\'m ') or \
-       message.content.lower().startswith('im ') or \
-       message.content.lower().startswith('i’m '):
-        if len(message.content) < 30:
-            name = message.content.lower().split(' ', 1)[1].capitalize()
-            await message.channel.send(f'Hi {name}, I\'m Glassbox!')
-
-    # ash moment
-    if message.author.id == 412713124077109249:
-        if 'florida' in message.content.lower() or 'floridian' in message.content.lower():
-            await message.add_reaction('🐊')
-        # 1 in 16 chance
-        elif rand.random() < 0.0625:
-            await message.add_reaction('<:frogpog:1005330533544370238>')
-    # magment
-    if message.author.id == 895809582058831882:
-        # 1 in 16 chance
-        if rand.random() < 0.0625:
-            await message.add_reaction('<:cat_eyebrowraise:1037610737947906079>')
-    # steve moment
-    if message.author.id == 913183576281997332:
-        # 1 in 16 chance
-        if rand.random() < 0.0625:
-            if rand.random() < 0.5:
-                await message.add_reaction('<:huh:1005333474430963753>')
-            else:
-                await message.add_reaction('<:whatthefuck:1040419073391071353>')
-
-
 @glass.event
 async def on_ready():
     """Boot actions. Set game and status.
@@ -216,6 +99,7 @@ async def pwd(ctx):
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
     await ctx.send('```'+consoles[ctx.guild.id].pwd()+'```')
+
 
 @glass.command()
 async def upload(ctx, path=''):
@@ -334,15 +218,91 @@ async def on_message(message):
     # Do nothing if the message is from us or another bot
     if message.author.bot:
         return
-    # Do stuff if the message is in ATR2
-    if message.guild.id == 740284671535087742:
-        await atr2message(message)
-    # Do stuff if the message is in The Shawty Verse
-    if message.guild.id == 910680843704488006:
-        await shawty_message(message)
-    # Do stuff if the message is in the doghouse
-    if message.guild.id == 1040092108712837230:
-        await shawty_message(message)
+
+    # DO NOT ENTER FORBIDDEN PLACES
+    # TODO make this configurable and persistent and stored in another file
+    forbidden = {917229423311331348, 1089892659096719441}
+    if message.channel.id in forbidden:
+        return
+
+    # Try responding automatically
+    responses = {
+        '<@1042577738436980877> caramelldansen': 'https://www.youtube.com/watch?v=qz2Ihbm_Mz0',
+        '<@1042577738436980877>': f'Hello, {message.author.display_name}.',
+        '<@1042577738436980877> l': 'https://cdn.discordapp.com/attachments/546898644947828756/941466286448332800'
+                                    '/2845e155a573a63eb0ded10d83ec5b1b13bf9c30c71819728c207b1c4e73a038_1.png',
+        'dead chat': 'https://tenor.com/view/undertale-papyrus-undertale-papyrus-dead-chat-dead-chat-xd-gif'
+                     '-25913129',
+        '<@1042577738436980877> who\'s on first': 'https://cdn.discordapp.com/attachments/678305861978030081'
+                                                  '/928228137333051402/hstrhtr.mp4',
+        '<@1042577738436980877> big iron': 'https://cdn.discordapp.com/attachments/525830406776553492'
+                                           '/901916671105708102/Big_Iron-3.mp4',
+        '<@1042577738436980877> shrek': 'https://cdn.discordapp.com/attachments/704856529840504863'
+                                        '/707960111553052732/full-shrek1.webm',
+        '<@1042577738436980877> puss in boots': 'https://stolen.shoes/embedVideo?video=https://b2.thefileditch.ch/'
+                                                'jdmYNfXxTCPUGAlwLnHq.mp4&image=https://www.hollywoodreporter.com/'
+                                                'wp-content/uploads/2022/11/'
+                                                'Puss-in-Boots-The-Last-Wish-Everett-H-2022.jpg?w=1296'
+    }
+    if message.content.lower() in responses:
+        await message.channel.send(responses[message.content.lower()])
+
+    # Screech
+    if '<@1042577738436980877>' in message.content and len(message.content) > 100:
+        await message.channel.send('https://cdn.discordapp.com/attachments/740284671535087745/974198322439028736'
+                                   '/do_not_push_the_button.mp4')
+
+    # Be dad
+    if message.content.lower().startswith('i\'m ') or \
+            message.content.lower().startswith('im ') or \
+            message.content.lower().startswith('i’m '):
+        if len(message.content) < 30:
+            name = message.content.lower().split(' ', 1)[1].capitalize()
+            my_name = message.guild.me.nick if message.guild.me.nick else "Glassbox"
+            await message.channel.send(f'Hi {name}, I\'m '+my_name+'!')
+
+    # Be my friend
+    trouble = s_trouble
+    if message.content.lower() == 'trouble':
+        await message.channel.send('Are you Mr. Dunlop?')
+    if trouble.eval(message.content) and trouble.has_next():
+        trouble.nextline()
+        if trouble.has_next():
+            await message.channel.send(trouble.nextline())
+        else:
+            trouble.reset()
+        return
+    else:
+        trouble.reset()
+
+    global rand
+    # ash moment
+    if message.author.id == 412713124077109249:
+        if 'florida' in message.content.lower() or 'floridian' in message.content.lower():
+            await message.add_reaction('🐊')
+        elif rand.random() < 0.0625:  # 1 in 16 chance
+            await message.add_reaction('<:frogpog:1005330533544370238>')
+    # magment
+    if message.author.id == 895809582058831882:
+        if rand.random() < 0.0625:  # 1 in 16 chance
+            await message.add_reaction('<:cat_eyebrowraise:1037610737947906079>')
+    # steve moment
+    if message.author.id == 913183576281997332:
+        if rand.random() < 0.0625:  # 1 in 16 chance
+            if rand.random() < 0.5:
+                await message.add_reaction('<:huh:1005333474430963753>')
+            else:
+                await message.add_reaction('<:whatthefuck:1040419073391071353>')
+    # kink moment
+    if message.author.id == 720442589584556034:
+        if rand.random() < 0.125:  # 1 in 8 chance
+            await message.add_reaction('<:bonus_chromosome:1011729141151830047>')
+    # fork moment
+    if message.author.id == 738020641269219329:
+        if rand.random() < 0.0625:  # 1 in 16 chance
+            await message.add_reaction('<:redditor:741101661170302987>')
+
+    # Mandatory line to make commands work
     await glass.process_commands(message)
 
 if __name__ == '__main__':
