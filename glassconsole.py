@@ -76,6 +76,44 @@ class GlassConsole:
         if owner == folder_owner:
             shutil.rmtree(p.join(self.root, target_path))
 
+    def wget(self, url, path, owner):
+        """Given a URL, store it in a text file in the working directory.
+
+        Raises FileNotFoundError if the given URL does not end in a filename with an extension.
+        Raises NotADirectoryError if the target directory is outside the server data folder.
+        Raises FileExistsError if a file with the same name already exists.
+        Raises PermissionError if the user is not in the .owner of the target directory.
+        """
+        if path != '':
+            name = p.split(path)[1]
+        else:
+            name = p.split(url)[1]
+        if '.' not in p.split(url)[1]:
+            raise FileNotFoundError('Invalid URL.')
+        for c in '`~:?*\\\'\"<>| ':
+            if c in name or name[0] == '.':
+                raise PermissionError(f'Illegal file name. File names cannot contain \"{c}\".')
+        target_path = p.relpath(p.abspath(p.join(self.root, self.folder, p.split(path)[0], name)), start=p.abspath(self.root))
+        # Stop them if they're trying to escape their server
+        if target_path.startswith('..'):
+            raise NotADirectoryError('Invalid path.')
+        # Stop if the target already exists
+        if p.isfile(p.join(self.root, target_path)) or p.isdir(p.join(self.root, target_path)):
+            raise FileExistsError('Invalid path. An item with this name already exists in this location.')
+        # Stop if the target has no owner
+        if not p.isfile(p.join(self.root, p.split(target_path)[0], '.owner')):
+            raise PermissionError('You do not have permission to modify this folder.')
+
+        with open(p.join(self.root, p.split(target_path)[0], '.owner')) as file:
+            folder_owner = int(file.read())
+        # Stop if the target owner is not the user
+        if owner != folder_owner:
+            raise PermissionError('You do not have permission to modify this folder.')
+        # Proceed with saving the file
+        if owner == folder_owner:
+            with open(p.join(self.root, target_path), 'w') as file:
+                file.write(url)
+
     def rm(self, path: str, owner: id):
         """Removes a file or folder, if it's owned by the right Discord user ID.
 
@@ -162,7 +200,10 @@ class GlassConsole:
             if p.split(p.join(self.root, target_path))[1].startswith('.'):
                 raise FileNotFoundError('File not found.')
             else:
-                return p.join(self.root, target_path)
+                # return p.join(self.root, target_path)
+                with open(p.join(self.root, target_path)) as file:
+                    content = file.read()
+                return content
         else:
             raise FileNotFoundError('File not found.')
 

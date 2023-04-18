@@ -107,6 +107,27 @@ async def rm(ctx, *, path):
 
 
 @glass.command()
+async def wget(ctx: discord.ext.commands.Context, url='', path=''):
+    """Attempt to store a URL in the working directory."""
+    # Obligatory check to see if the console is initialized yet
+    if ctx.guild.id not in consoles:
+        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+
+    if len(ctx.message.attachments) > 1:
+        await ctx.send('Too many files attached!')
+        return
+    elif len(ctx.message.attachments) == 1:
+        path = url
+        url = str(ctx.message.attachments[0])
+
+    try:
+        consoles[ctx.guild.id].wget(url, path, ctx.author.id)
+        await ctx.send('File saved.')
+    except (FileNotFoundError, NotADirectoryError, FileExistsError, PermissionError) as exception:
+        await ctx.send(str(exception))
+
+
+@glass.command()
 async def cd(ctx, *, arg=''):
     """Change the directory, and output the new working path."""
     # Obligatory check to see if the console is initialized yet
@@ -151,16 +172,17 @@ async def pwd(ctx):
 
 
 @glass.command()
-async def upload(ctx, path=''):
+async def upload(ctx: discord.ext.commands.Context, path=''):
     """Upload a file from the system."""
     # Obligatory check to see if the console is initialized yet
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
 
     try:
-        await ctx.send(file=discord.File(consoles[ctx.guild.id].retrieve_file(path)))
+        # await ctx.send(file=discord.File(consoles[ctx.guild.id].retrieve_file(path)))
+        await ctx.send(consoles[ctx.guild.id].retrieve_file(path))
     except FileNotFoundError as exception:
-        await ctx.send(exception)
+        await ctx.send(str(exception))
 
 
 @glass.command()
