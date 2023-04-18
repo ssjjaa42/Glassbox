@@ -34,22 +34,20 @@ class GlassConsole:
 
     def mkdir(self, name: str, owner: int):
         """Make a directory, owned by a specific Discord user ID."""
-        if self.folder != '':
-            raise PermissionError('Folders can only be created from ~.')
         if '/' in name:
-            raise PermissionError('Folders can only be created in ~.')
+            raise PermissionError('Advanced paths are not currently available for folder creation.')
         for c in '`.~:?*\\\'\"<>| ':
             if c in name:
                 raise PermissionError(f'Illegal folder name. Folder names cannot contain \"{c}\".')
-        if p.isdir(p.join(self.root, name)):
+        if p.isdir(p.join(self.root, self.folder, name)):
             raise PermissionError(f'Folder {name} already exists!')
 
         owned_folders = {owner: 0}
         self.count_folders(owned_folders, self.root)
         if owned_folders[owner] >= self.MAX_DIRECTORIES:
             raise PermissionError(f'You can only have a maximum of {self.MAX_DIRECTORIES} folders.')
-        os.mkdir(p.join(self.root, name))
-        with open(p.join(self.root, name, '.owner'), 'w') as file:
+        os.mkdir(p.join(self.root, self.folder, name))
+        with open(p.join(self.root, self.folder, name, '.owner'), 'w') as file:
             file.write(str(owner))
 
     def rmdir(self, path: str, owner: int):
