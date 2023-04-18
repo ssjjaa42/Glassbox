@@ -128,6 +128,20 @@ async def wget(ctx: discord.ext.commands.Context, url='', path=''):
 
 
 @glass.command()
+async def mv(ctx, source='', target=''):
+    """Move or rename a file."""
+    # Obligatory check to see if the console is initialized yet
+    if ctx.guild.id not in consoles:
+        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+
+    try:
+        consoles[ctx.guild.id].mv(source, target, ctx.author.id)
+        await ctx.send('File moved.')
+    except (NameError, FileNotFoundError, NotADirectoryError, FileExistsError, PermissionError) as exception:
+        await ctx.send(str(exception))
+
+
+@glass.command()
 async def cd(ctx, *, arg=''):
     """Change the directory, and output the new working path."""
     # Obligatory check to see if the console is initialized yet

@@ -33,7 +33,11 @@ class GlassConsole:
             self.count_folders(owned_folders, p.join(path, f))
 
     def mkdir(self, name: str, owner: int):
-        """Make a directory, owned by a specific Discord user ID."""
+        """Make a directory, owned by a specific Discord user ID.
+
+        Raises PermissionError if it can't.
+        # Todo better docstring
+        """
         if '/' in name:
             raise PermissionError('Advanced paths are not currently available for folder creation.')
         for c in '`.~:?*\\\'\"<>| ':
@@ -41,11 +45,21 @@ class GlassConsole:
                 raise PermissionError(f'Illegal folder name. Folder names cannot contain \"{c}\".')
         if p.isdir(p.join(self.root, self.folder, name)):
             raise PermissionError(f'Folder {name} already exists!')
-
+        # Check folder limit
         owned_folders = {owner: 0}
         self.count_folders(owned_folders, self.root)
         if owned_folders[owner] >= self.MAX_DIRECTORIES:
             raise PermissionError(f'You can only have a maximum of {self.MAX_DIRECTORIES} folders.')
+        # Check owner permission
+        folder_owner = None
+        if p.isfile(p.join(self.root, self.folder, '.owner')):
+            with open(p.join(self.root, self.folder, '.owner')) as file:
+                folder_owner = int(file.read())
+        elif self.folder == '':
+            folder_owner = owner
+        if not (owner == folder_owner):
+            raise PermissionError('You do not have permission to modify this folder.')
+        # proceed with making the folder
         os.mkdir(p.join(self.root, self.folder, name))
         with open(p.join(self.root, self.folder, name, '.owner'), 'w') as file:
             file.write(str(owner))
@@ -114,7 +128,53 @@ class GlassConsole:
             with open(p.join(self.root, target_path), 'w') as file:
                 file.write(url)
 
-    def rm(self, path: str, owner: id):
+    def mv(self, source:str, target:str, owner: int):
+        """Rename a file, or move it to a new location.
+
+        Raises NameError if one or both arguments are not given.
+        Raises PermissionError if the proposed name is illegal.
+        Raises NotADirectoryError if either path is outside the server data folder.
+        Raises FileNotFoundError if the source file does not exist.
+        Raises FileExistsError if the target path exists already.
+        Raises PermissionError if the user is not the owner of both the source file and the destination folder.
+        """
+        name = p.split(source)[1]
+        if source == '' or target == '':
+            raise NameError('Bad arguments.')
+        for c in '`~:?*\\\'\"<>| ':
+            if c in name or name[0] == '.':
+                raise PermissionError(f'Illegal file name. File names cannot contain \"{c}\".')
+        source_path = p.relpath(p.abspath(p.join(self.root, self.folder, source)), start=p.abspath(self.root))
+        target_path = p.relpath(p.abspath(p.join(self.root, self.folder, target)), start=p.abspath(self.root))
+        # Stop them if they're trying to escape their server
+        if source_path.startswith('..') or target_path.startswith('..'):
+            raise NotADirectoryError('Invalid path.')
+        # Stop if the source doesn't exist or the target already exists
+        if not p.isfile(p.join(self.root, source_path)):
+            raise FileNotFoundError('File not found.')
+        if p.isfile(p.join(self.root, target_path)) or p.isdir(p.join(self.root, target_path)):
+            raise FileExistsError('Invalid destination. An item with this name already exists in this location.')
+        # Stop if the source or target has no owner
+        if not p.isfile(p.join(self.root, p.split(source_path)[0], '.owner')):
+            raise PermissionError('You do not have permission to modify this folder.')
+        if not p.isfile(p.join(self.root, p.split(target_path)[0], '.owner')):
+            raise PermissionError('You do not have permission to move files to this destination.')
+
+        with open(p.join(self.root, p.split(source_path)[0], '.owner')) as file:
+            source_owner = int(file.read())
+        with open(p.join(self.root, p.split(target_path)[0], '.owner')) as file:
+            target_owner = int(file.read())
+
+        # Stop if the source or target owner is not the user
+        if owner != source_owner:
+            raise PermissionError('You do not have permission to modify this folder.')
+        if owner != target_owner:
+            raise PermissionError('You do not have permission to move files to this destination.')
+        # Proceed with renaming the file
+        if owner == source_owner and owner == target_owner:
+            os.rename(p.join(self.root, source_path), p.join(self.root, target_path))
+
+    def rm(self, path: str, owner: int):
         """Removes a file or folder, if it's owned by the right Discord user ID.
 
         Raises PermissionError if the file/folder has no owner, or if the owner is not the user.
