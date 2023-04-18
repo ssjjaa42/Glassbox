@@ -17,6 +17,7 @@ rand = random.Random()
 s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
 last_channel = None
 last_server = None
+last_edit = {}
 
 
 def sanitize_text(text: str):
@@ -280,6 +281,38 @@ async def inspirational(ctx: discord.ext.commands.Context, *, text=''):
         await ctx.send(file=discord.File(pic_path))
     except UserWarning as exception:
         await ctx.send(str(exception))
+
+
+@glass.command()
+async def catch4k(ctx):
+    """Post the last message edited or deleted in the channel."""
+    if str(ctx.message.channel.id) not in last_edit.keys():
+        await ctx.send('Targeting failure.')
+    if last_edit[str(ctx.message.channel.id)][2] is not None:
+        await last_edit[str(ctx.message.channel.id)][2].reply(
+            f'**Original message by {last_edit[str(ctx.message.channel.id)][1]}:**\n'
+            f'{last_edit[str(ctx.message.channel.id)][0]}')
+    else:
+        await ctx.send(f'**Original message by {last_edit[str(ctx.message.channel.id)][1]}:**\n'
+                       f'{last_edit[str(ctx.message.channel.id)][0]}')
+
+
+@glass.event
+async def on_message_edit(before: discord.Message, after: discord.Message):
+    if before.channel.id not in last_edit:
+        last_edit[str(before.channel.id)] = [0, 0, 0]
+    last_edit[str(before.channel.id)][0] = before.clean_content
+    last_edit[str(before.channel.id)][1] = before.author.mention
+    last_edit[str(before.channel.id)][2] = after
+
+
+@glass.event
+async def on_message_delete(msg: discord.Message):
+    if msg.channel.id not in last_edit:
+        last_edit[str(msg.channel.id)] = [0, 0, 0]
+    last_edit[str(msg.channel.id)][0] = msg.clean_content
+    last_edit[str(msg.channel.id)][1] = msg.author.mention
+    last_edit[str(msg.channel.id)][2] = None
 
 
 @glass.event
