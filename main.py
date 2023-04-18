@@ -62,6 +62,51 @@ consoles = {}
 
 
 @glass.command()
+async def mkdir(ctx, *, name):
+    """Try to make a new directory."""
+    # Obligatory check to see if the console is initialized yet
+    if ctx.guild.id not in consoles:
+        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+    try:
+        consoles[ctx.guild.id].mkdir(name, ctx.author.id)
+        await ctx.send(f'Folder created.')
+    except PermissionError as exception:
+        await ctx.send(exception)
+
+
+@glass.command()
+async def rmdir(ctx, *, path):
+    """Try to delete a directory."""
+    # Obligatory check to see if the console is initialized yet
+    if ctx.guild.id not in consoles:
+        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+    try:
+        consoles[ctx.guild.id].rmdir(path, ctx.author.id)
+        await ctx.send(f'Folder deleted.')
+    except (NotADirectoryError, PermissionError) as exception:
+        await ctx.send(exception)
+
+
+@glass.command()
+async def rm(ctx, *, path):
+    """Try to delete a file."""
+    # Obligatory check to see if the console is initialized yet
+    if ctx.guild.id not in consoles:
+        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
+    try:
+        consoles[ctx.guild.id].rm(path, ctx.author.id)
+        await ctx.send(f'File deleted.')
+    except IsADirectoryError:
+        try:
+            consoles[ctx.guild.id].rmdir(path, ctx.author.id)
+            await ctx.send(f'Folder deleted.')
+        except (NotADirectoryError, PermissionError) as exception:
+            await ctx.send(exception)
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as exception:
+        await ctx.send(exception)
+
+
+@glass.command()
 async def cd(ctx, *, arg=''):
     """Change the directory, and output the new working path."""
     # Obligatory check to see if the console is initialized yet
@@ -112,7 +157,7 @@ async def upload(ctx, path=''):
     try:
         await ctx.send(file=discord.File(consoles[ctx.guild.id].retrieve_file(path)))
     except FileNotFoundError as exception:
-        await ctx.send(str(exception))
+        await ctx.send(exception)
 
 
 @glass.command()
@@ -213,7 +258,7 @@ async def on_message(message):
 
     # DO NOT ENTER FORBIDDEN PLACES
     # TODO make this configurable and persistent and stored in another file
-    forbidden = {917229423311331348, 1089892659096719441}
+    forbidden = [917229423311331348, 1089892659096719441]
     if message.channel.id in forbidden:
         return
 
@@ -251,7 +296,7 @@ async def on_message(message):
         if len(message.content) < 30:
             name = message.content.lower().split(' ', 1)[1].capitalize()
             my_name = message.guild.me.nick if message.guild.me.nick else "Glassbox"
-            await message.channel.send(f'Hi {name}, I\'m '+my_name+'!')
+            await message.channel.send(f'Hi {name}, I\'m {my_name}!')
 
     # Be my friend
     # TODO amend script reading. I have disabled it until I decide to work on it again.
