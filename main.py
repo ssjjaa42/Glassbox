@@ -121,20 +121,23 @@ async def cd(ctx, *, arg=''):
 
 
 @glass.command()
-async def ls(ctx):
-    """List the contents of the working directory."""
+async def ls(ctx, *, path=''):
+    """List the contents of the working directory, or folder at path if given."""
     # Obligatory check to see if the console is initialized yet
     if ctx.guild.id not in consoles:
         consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
 
-    contents = consoles[ctx.guild.id].ls()
-    out = '```\n'
-    for filename in contents:
-        out += filename + '\n'
-    out += '```'
-    if len(contents) == 0:
-        out = '```\n \n```'
-    await ctx.send(out)
+    try:
+        contents = consoles[ctx.guild.id].ls(path)
+        out = '```\n'
+        for filename in contents:
+            out += filename + '\n'
+        out += '```'
+        if len(contents) == 0:
+            out = '```\n \n```'
+        await ctx.send(out)
+    except NotADirectoryError as exception:
+        await ctx.send(exception)
 
 
 @glass.command()

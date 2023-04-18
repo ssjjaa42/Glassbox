@@ -176,10 +176,38 @@ class GlassConsole:
         """Prints the path to the working directory, using an alias for the root data folder."""
         return p.normpath(p.join(self.root_alias, self.folder))
 
-    def ls(self):
-        """Lists the contents of the current folder, or the target folder, if it exists."""
-        folders = [(f+'/') for f in os.listdir(self.get_path()) if p.isdir(p.join(self.get_path(), f))]
-        files = [f for f in os.listdir(self.get_path()) if p.isfile(p.join(self.get_path(), f))
+    def ls(self, path):
+        """Lists the contents of the current folder, or the target folder, if it exists.
+
+        Raises NotADirectoryError if the path has illegal characters.
+        Raises NotADirectoryError if the target folder doesn't exist.
+        Raises NotADirectoryError if the target folder is outside the server's data folder.
+        """
+        start_folder = self.folder
+        # Check to go home
+        if path == '~':
+            start_folder = ''
+            path = path[1:]
+        if path.startswith('~/'):
+            start_folder = ''
+            path = path[2:]
+        # Check for invalid (and unwanted) chars
+        for c in '~:?*':
+            if c in path:
+                raise NotADirectoryError('Invalid path.')
+
+        target_path = p.relpath(p.abspath(p.join(self.root, start_folder, path)), start=p.abspath(self.root))
+        # Stop them if they're trying to escape their server
+        if target_path.startswith('..'):
+            raise NotADirectoryError('Invalid path.')
+        # Check to see if path is valid
+        if not p.isdir(p.join(self.root, target_path)):
+            raise NotADirectoryError('Invalid path.')
+
+        folders = [(f+'/') for f in os.listdir(p.join(self.root, target_path))
+                   if p.isdir(p.join(self.root, target_path, f))]
+        files = [f for f in os.listdir(p.join(self.root, target_path))
+                 if p.isfile(p.join(self.root, target_path, f))
                  and not f.startswith('.')]  # Hide hidden files (name starts with .)
         folders.extend(files)
         return folders
