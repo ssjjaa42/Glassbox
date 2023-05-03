@@ -330,7 +330,7 @@ async def on_message(message):
 
     # DO NOT ENTER FORBIDDEN PLACES
     # TODO make this configurable and persistent and stored in another file
-    forbidden = [917229423311331348, 1089892659096719441]
+    forbidden = [917229423311331348, 1089892659096719441, 1092167608289214544]
     if message.channel.id in forbidden:
         return
 
