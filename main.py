@@ -6,6 +6,7 @@ import random
 import discord
 from discord.ext import commands
 from glassconsole import GlassConsole
+import father
 import glasspictures
 import script
 
@@ -362,40 +363,13 @@ async def on_message(message):
                                    '/do_not_push_the_button.mp4')
 
     # Be dad
-    defense_dict = {
-        'i': 'you',
-        'i\'m': 'you\'re',
-        'im': 'you\'re',
-        'i’m': 'you\'re',
-        'i`m': 'you\'re, in addition to using weird symbols,',
-        'my': 'your',
-        'our': 'your',
-        'mine': 'your',
-        'i\'ve': 'you\'ve',
-        'ive': 'you\'ve',
-        'i’ve': 'you\'ve',
-        'i`ve': 'you\'ve, in addition to used weird symbols,'
-    }
-    if message.content.lower().startswith('i\'m ') or \
-            message.content.lower().startswith('im ') or \
-            message.content.lower().startswith('i’m '):
-        name = message.content.lower().split(' ', 1)[1]+' '
-        while name.startswith('i\'m ') or \
-                name.startswith('im ') or \
-                name.startswith('i’m ') or \
-                name.startswith('i`m '):
-            name = name.split(' ', 1)[1]
-        if name != '':
-            words = []
-            for word in name.split():
-                if word in defense_dict:
-                    words.append(defense_dict[word])
-                else:
-                    words.append(word)
-            name = ' '.join(words)
-            name = name.capitalize()
+    if father.triggers_dad(message.content):
+        try:
+            name = father.parse_name(message.content)
             my_name = message.guild.me.nick if message.guild.me.nick else "Glassbox"
             await message.channel.send(f'Hi {name}, I\'m {my_name}!')
+        except ValueError:
+            pass
 
     # Be my friend
     # TODO amend script reading. I have disabled it until I decide to work on it again.
