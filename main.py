@@ -5,7 +5,6 @@ import os
 import random
 import discord
 from discord.ext import commands
-from glassconsole import GlassConsole
 import father
 import glasspictures
 import script
@@ -15,7 +14,7 @@ intents.message_content = True
 glass = commands.Bot(command_prefix='$', intents=intents)
 
 rand = random.Random()
-s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
+# s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
 last_channel = None
 last_server = None
 last_edit = {}
@@ -30,15 +29,6 @@ def sanitize_text(text: str):
         text = text.replace(c, ' ')
     text = text.strip()
     return text
-
-
-@glass.event
-async def on_guild_join(guild):
-    """Sets up the data folder when joining a new server."""
-    root_path = os.path.join(os.path.curdir, 'data', 'serverfiles')
-    target_path = os.path.join(root_path, str(guild.id))
-    if not os.path.exists(target_path):
-        os.mkdir(target_path)
 
 
 async def print_message(message: discord.Message):
@@ -57,148 +47,9 @@ async def on_ready():
     This should only run once. I'm not sure if it actually will, though.
     """
     print(f'Connected as {glass.user}!')
+    await glass.load_extension('extensions.glassconsole')
     game = discord.Activity(type=discord.ActivityType.watching, name='myself think', state='It\'s dark in here')
     await glass.change_presence(status=discord.Status.do_not_disturb, activity=game)
-
-consoles = {}
-
-
-@glass.command()
-async def mkdir(ctx, *, name):
-    """Try to make a new directory."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-    try:
-        consoles[ctx.guild.id].mkdir(name, ctx.author.id)
-        await ctx.send(f'Folder created.')
-    except PermissionError as exception:
-        await ctx.send(exception)
-
-
-@glass.command()
-async def rmdir(ctx, *, path):
-    """Try to delete a directory."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-    try:
-        consoles[ctx.guild.id].rmdir(path, ctx.author.id)
-        await ctx.send(f'Folder deleted.')
-    except (NotADirectoryError, PermissionError) as exception:
-        await ctx.send(exception)
-
-
-@glass.command()
-async def rm(ctx, *, path):
-    """Try to delete a file."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-    try:
-        consoles[ctx.guild.id].rm(path, ctx.author.id)
-        await ctx.send(f'File deleted.')
-    except IsADirectoryError:
-        try:
-            consoles[ctx.guild.id].rmdir(path, ctx.author.id)
-            await ctx.send(f'Folder deleted.')
-        except (NotADirectoryError, PermissionError) as exception:
-            await ctx.send(exception)
-    except (FileNotFoundError, NotADirectoryError, PermissionError) as exception:
-        await ctx.send(exception)
-
-
-@glass.command()
-async def wget(ctx: discord.ext.commands.Context, url='', path=''):
-    """Attempt to store a URL in the working directory."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-
-    if len(ctx.message.attachments) > 1:
-        await ctx.send('Too many files attached!')
-        return
-    elif len(ctx.message.attachments) == 1:
-        path = url
-        url = str(ctx.message.attachments[0])
-
-    try:
-        consoles[ctx.guild.id].wget(url, path, ctx.author.id)
-        await ctx.send('File saved.')
-    except (FileNotFoundError, NotADirectoryError, FileExistsError, PermissionError) as exception:
-        await ctx.send(str(exception))
-
-
-@glass.command()
-async def mv(ctx, source='', target=''):
-    """Move or rename a file."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-
-    try:
-        consoles[ctx.guild.id].mv(source, target, ctx.author.id)
-        await ctx.send('File moved.')
-    except (NameError, FileNotFoundError, NotADirectoryError, FileExistsError, PermissionError) as exception:
-        await ctx.send(str(exception))
-
-
-@glass.command()
-async def cd(ctx, *, arg=''):
-    """Change the directory, and output the new working path."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-
-    try:
-        consoles[ctx.guild.id].cd(arg)
-        await ctx.send('```'+str(consoles[ctx.guild.id])+'```')
-    except NotADirectoryError as exception:
-        await ctx.send(exception)
-
-
-@glass.command()
-async def ls(ctx, *, path=''):
-    """List the contents of the working directory, or folder at path if given."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-
-    try:
-        contents = consoles[ctx.guild.id].ls(path)
-        out = '```\n'
-        for filename in contents:
-            out += filename + '\n'
-        out += '```'
-        if len(contents) == 0:
-            out = '```\n \n```'
-        await ctx.send(out)
-    except NotADirectoryError as exception:
-        await ctx.send(exception)
-
-
-@glass.command()
-async def pwd(ctx):
-    """Outputs the current working directory."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-
-    await ctx.send('```'+consoles[ctx.guild.id].pwd()+'```')
-
-
-@glass.command()
-async def upload(ctx: discord.ext.commands.Context, path=''):
-    """Upload a file from the system."""
-    # Obligatory check to see if the console is initialized yet
-    if ctx.guild.id not in consoles:
-        consoles[ctx.guild.id] = GlassConsole(ctx.guild.id)
-
-    try:
-        # await ctx.send(file=discord.File(consoles[ctx.guild.id].retrieve_file(path)))
-        await ctx.send(consoles[ctx.guild.id].retrieve_file(path))
-    except FileNotFoundError as exception:
-        await ctx.send(str(exception))
 
 
 @glass.command()

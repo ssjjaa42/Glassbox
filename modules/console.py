@@ -1,10 +1,10 @@
-# Console section of Glassbox
+# Library of functions to help a Discord bot safely (allegedly) manage filesystems through commands
 import os
 import shutil
 from os import path as p
 
 
-class GlassConsole:
+class Console:
     root_alias = '~'
     MAX_DIRECTORIES = 4
 
