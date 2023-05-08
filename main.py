@@ -5,9 +5,8 @@ import os
 import random
 import discord
 from discord.ext import commands
-import father
-import glasspictures
-import script
+import modules.settings as settings
+# import modules.script as script
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -47,7 +46,9 @@ async def on_ready():
     This should only run once. I'm not sure if it actually will, though.
     """
     print(f'Connected as {glass.user}!')
+    await glass.load_extension('extensions.glassdadjokes')
     await glass.load_extension('extensions.glassconsole')
+    await glass.load_extension('extensions.glasspictures')
     game = discord.Activity(type=discord.ActivityType.watching, name='myself think', state='It\'s dark in here')
     await glass.change_presence(status=discord.Status.do_not_disturb, activity=game)
 
@@ -87,52 +88,6 @@ async def roll(ctx: discord.ext.commands.Context, *, text=''):
             await ctx.send(rolls+': **'+str(total)+'**')
     except (IndexError, ValueError):
         await ctx.send('Invalid input! Try \"$roll 1d6\"')
-
-
-@glass.command()
-async def downey(ctx: discord.ext.commands.Context, *, text=''):
-    """Robert Downey, Jr. Explaining meme generator."""
-    try:
-        pic_path = glasspictures.downey_meme(text)
-        await ctx.message.delete()
-        await ctx.send(file=discord.File(pic_path))
-    except UserWarning as exception:
-        await ctx.send(str(exception))
-
-
-@glass.command()
-async def inspirational(ctx: discord.ext.commands.Context, *, text=''):
-    """Inspirational meme generator.
-
-    Can take image inputs from an attachment or a direct URL at the start of the command invocation.
-    A pipe character ('|') divides the top row of text from the bottom row.
-    The bottom row of text (and the pipe character) is optional.
-    """
-    if len(ctx.message.attachments) > 1:
-        await ctx.send('Too many images attached!')
-        return
-    elif len(ctx.message.attachments) == 1:
-        image_url = str(ctx.message.attachments[0])
-    elif len(ctx.message.attachments) == 0 and text.startswith('https://'):
-        words = text.split(' ')
-        image_url = words[0]
-        words.pop(0)
-        text = ' '.join(words)
-    else:
-        await ctx.send('No image provided!')
-        return
-    parts = text.split('|')
-    header = parts[0].strip()
-    body = ''
-    if len(parts) > 1:
-        body = parts[1].strip()
-    try:
-        await ctx.message.delete()
-        async with ctx.typing():
-            pic_path = glasspictures.inspirational_meme(image_url, header, body)
-        await ctx.send(file=discord.File(pic_path))
-    except UserWarning as exception:
-        await ctx.send(str(exception))
 
 
 @glass.command()
@@ -182,8 +137,7 @@ async def on_message(message):
 
     # DO NOT ENTER FORBIDDEN PLACES
     # TODO make this configurable and persistent and stored in another file
-    forbidden = [917229423311331348, 1089892659096719441, 1092167608289214544]
-    if message.channel.id in forbidden:
+    if message.channel.id in settings.forbidden():
         return
 
     # Try responding automatically
@@ -212,15 +166,6 @@ async def on_message(message):
     if '<@1042577738436980877>' in message.content and len(message.content) > 100:
         await message.channel.send('https://cdn.discordapp.com/attachments/740284671535087745/974198322439028736'
                                    '/do_not_push_the_button.mp4')
-
-    # Be dad
-    if father.triggers_dad(message.content):
-        try:
-            name = father.parse_name(message.content)
-            my_name = message.guild.me.nick if message.guild.me.nick else "Glassbox"
-            await message.channel.send(f'Hi {name}, I\'m {my_name}!')
-        except ValueError:
-            pass
 
     # Be my friend
     # TODO amend script reading. I have disabled it until I decide to work on it again.

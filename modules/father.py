@@ -1,4 +1,4 @@
-# Dad bot section of Glassbox
+# Dad joke helper functions.
 
 # FIXME this is ripped from old Dad. Can't account for "i am" yet.
 defense_dict = {
@@ -18,7 +18,7 @@ defense_dict = {
 
 def triggers_dad(message: str):
     """Returns a boolean depending on whether or not a given string is food for a dad joke."""
-    message = message.lower()
+    message = message.lower() + ' '
     if message.startswith('i\'m ') \
         or message.startswith('im ') \
         or message.startswith('i’m ') \
@@ -31,13 +31,13 @@ def triggers_dad(message: str):
 
 def parse_name(message: str):
     """Processes a string and gets a name out of its beginning."""
-    message = message.lower()
+    message = message.lower() + ' '
     # Cut the end of the string off
     # "i'm so tired, time for bed. night!" becomes "i'm so tired" after this
     for c in '.,!?':
         idx = message.find(c)
         if not idx == -1:
-            message = message[:idx]
+            message = message[:idx]+' '
     # Cut the beginnings off
     # "i'm so tired" becomes "so tired" after this
     # "i'm i'm stupid" becomes "stupid" after this
@@ -47,14 +47,14 @@ def parse_name(message: str):
         or message.startswith('i`m ') \
         or message.startswith('i am '):
         if message.startswith('i am '):
-            message = message[5:]
+            message = message[5:].strip() + ' '
         elif message.startswith('im '):
-            message = message[3:]
+            message = message[3:].strip() + ' '
         else:
-            message = message[4:]
+            message = message[4:].strip() + ' '
     # TODO is defense necessary? If so, it would go here.
     # Check to see if the result is valid
-    if message == '':
+    if message.strip() == '':
         raise ValueError('Invalid name.')
     for c in '.,!?':
         if message.startswith(c):
@@ -62,4 +62,4 @@ def parse_name(message: str):
     # Capitalize the name
     name = message.capitalize()
     # Return name
-    return name
+    return name[:-1]
