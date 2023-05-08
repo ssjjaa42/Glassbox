@@ -46,6 +46,7 @@ async def on_ready():
     This should only run once. I'm not sure if it actually will, though.
     """
     print(f'Connected as {glass.user}!')
+    await glass.load_extension('extensions.glasssettings')
     await glass.load_extension('extensions.glassdadjokes')
     await glass.load_extension('extensions.glassconsole')
     await glass.load_extension('extensions.glasspictures')
@@ -135,9 +136,12 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    # DO NOT ENTER FORBIDDEN PLACES
-    # TODO make this configurable and persistent and stored in another file
+    # DO NOT ENTER FORBIDDEN PLACES (commands are still ok, though.)
     if message.channel.id in settings.forbidden():
+        # Note to self. This process_commands is absolutely necessary! Without this, forbidden channels will respond to NO commands.
+        # If you want a COMMAND to not run in forbidden channels, please check ctx.channel.id in the command.
+        # The process_commands should not be run in ANY other checks, or else it will genuinely run commands multiple times.
+        await glass.process_commands(message)
         return
 
     # Try responding automatically

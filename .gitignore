@@ -1,4 +1,5 @@
 /data/tmp/
 /data/serverfiles/
+/data/settings/
 token.txt
 *__pycache__*
