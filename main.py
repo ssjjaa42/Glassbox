@@ -55,6 +55,18 @@ async def on_ready():
 
 
 @glass.command()
+@commands.is_owner()
+async def shutdown(ctx: discord.ext.commands.Context):
+    # TODO move this enumeration of extensions from hard-coding to a settings file
+    await glass.unload_extension('extensions.glasssettings')
+    await glass.unload_extension('extensions.glassdadjokes')
+    await glass.unload_extension('extensions.glassconsole')
+    await glass.unload_extension('extensions.glasspictures')
+    await glass.close()
+    print('Bot shut down.')
+
+
+@glass.command()
 async def roll(ctx: discord.ext.commands.Context, *, text=''):
     """Roll a n-sided die, with optional modifier.
 
