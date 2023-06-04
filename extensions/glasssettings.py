@@ -1,4 +1,4 @@
-# Image processing for Glassbox
+# Settings for Glassbox
 import logging as toplog
 from datetime import datetime
 import discord
