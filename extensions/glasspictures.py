@@ -1,7 +1,10 @@
 # Image processing for Glassbox
+import logging
 import discord
 from discord.ext import commands
 from modules.pictures import *
+
+logger = logging.getLogger('glassbox')
 
 class GlassPictures(commands.Cog):
     """Image-related commands for a Discord bot."""
@@ -56,4 +59,4 @@ class GlassPictures(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(GlassPictures(bot))
-    print('Loaded image commands!')
+    logger.info('Loaded image commands!')

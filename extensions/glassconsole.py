@@ -1,8 +1,11 @@
 # Console commands for Glassbox
 import os
+import logging
 import discord
 from discord.ext import commands
 from modules.console import Console
+
+logger = logging.getLogger('glassbox')
 
 class GlassConsole(commands.Cog):
     """Console-related commands for a Discord bot."""
@@ -152,4 +155,4 @@ class GlassConsole(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(GlassConsole(bot))
-    print('Loaded console commands!')
+    logger.info('Loaded console commands!')

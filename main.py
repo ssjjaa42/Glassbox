@@ -2,6 +2,7 @@
 # by ssjjaa
 
 import os
+import logging
 import random
 import discord
 from discord.ext import commands
@@ -11,6 +12,14 @@ import modules.settings as settings
 intents = discord.Intents.default()
 intents.message_content = True
 glass = commands.Bot(command_prefix='$', intents=intents)
+
+logger = logging.getLogger('glassbox')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter(f'%(asctime)s %(levelname)s\t\b\b\b%(name)s %(message)s', '%Y-%m-%d %H:%M:%S')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 rand = random.Random()
 # s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
@@ -30,13 +39,13 @@ def sanitize_text(text: str):
     return text
 
 
-async def print_message(message: discord.Message):
+async def log_message(message: discord.Message):
     """Prints a message to the log, sanitizing it first. Also prints the author, current server and channel."""
     global last_channel
     if message.channel != last_channel:
-        print(message.guild.name, '/', message.channel.name)
+        logger.info(f'{message.guild.name} / {message.channel.name}')
         last_channel = message.channel
-    print(f'\t{message.author.display_name}: {sanitize_text(message.content)}')
+    logger.info(f'    {message.author.display_name}: {sanitize_text(message.content)}')
 
 
 @glass.event
@@ -45,7 +54,7 @@ async def on_ready():
 
     This should only run once. I'm not sure if it actually will, though.
     """
-    print(f'Connected as {glass.user}!')
+    logger.info(f'Connected as {glass.user}!')
     await glass.load_extension('extensions.glasssettings')
     await glass.load_extension('extensions.glassdadjokes')
     await glass.load_extension('extensions.glassconsole')
@@ -58,12 +67,13 @@ async def on_ready():
 @commands.is_owner()
 async def shutdown(ctx: discord.ext.commands.Context):
     # TODO move this enumeration of extensions from hard-coding to a settings file
+    await ctx.send('Shutting down...')
+    logger.info('Shutting down...')
     await glass.unload_extension('extensions.glasssettings')
     await glass.unload_extension('extensions.glassdadjokes')
     await glass.unload_extension('extensions.glassconsole')
     await glass.unload_extension('extensions.glasspictures')
     await glass.close()
-    print('Bot shut down.')
 
 
 @glass.command()
@@ -142,8 +152,8 @@ async def on_message(message):
     To be clear, things in this message run BEFORE any command runs.
     This method catches bot messages and does not do anything with them besides print them.
     """
-    # Print message
-    await print_message(message)
+    # Log message
+    await log_message(message)
     # Do nothing if the message is from us or another bot
     if message.author.bot:
         return

@@ -1,8 +1,11 @@
 # Image processing for Glassbox
+import logging as toplog
 from datetime import datetime
 import discord
 from discord.ext import commands
 from modules.settings import *
+
+logger = toplog.getLogger('glassbox')
 
 class GlassSettings(commands.Cog):
     """User configuration commands for a Discord bot."""
@@ -93,4 +96,4 @@ class GlassSettings(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(GlassSettings(bot))
-    print('Loaded configuration commands!')
+    logger.info('Loaded configuration commands!')

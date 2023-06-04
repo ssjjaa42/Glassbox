@@ -1,8 +1,11 @@
 # Dad jokes for Glassbox
+import logging
 import discord
 from discord.ext import commands
 from modules.father import *
 from modules.settings import forbidden
+
+logger = logging.getLogger('glassbox')
 
 class GlassFather(commands.Cog):
     """Give a Discord Bot dad jokes."""
@@ -29,4 +32,4 @@ class GlassFather(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(GlassFather(bot))
-    print('Loaded dad jokes!')
+    logger.info('Loaded dad jokes!')
