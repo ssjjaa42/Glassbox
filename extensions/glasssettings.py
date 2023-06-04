@@ -97,3 +97,7 @@ class GlassSettings(commands.Cog):
 async def setup(bot):
     await bot.add_cog(GlassSettings(bot))
     logger.info('Loaded configuration commands!')
+
+async def teardown(bot):
+    await bot.remove_cog('GlassSettings')
+    logger.info('Unloaded configuration commands.')

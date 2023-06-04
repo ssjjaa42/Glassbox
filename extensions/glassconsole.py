@@ -156,3 +156,8 @@ class GlassConsole(commands.Cog):
 async def setup(bot):
     await bot.add_cog(GlassConsole(bot))
     logger.info('Loaded console commands!')
+
+async def teardown(bot):
+    await bot.remove_cog('GlassConsole')
+    logger.info('Unloaded console commands.')
+    

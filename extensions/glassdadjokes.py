@@ -33,3 +33,7 @@ class GlassFather(commands.Cog):
 async def setup(bot):
     await bot.add_cog(GlassFather(bot))
     logger.info('Loaded dad jokes!')
+
+async def teardown(bot):
+    await bot.remove_cog('GlassFather')
+    logger.info('Unloaded dad jokes.')

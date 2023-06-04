@@ -60,3 +60,7 @@ class GlassPictures(commands.Cog):
 async def setup(bot):
     await bot.add_cog(GlassPictures(bot))
     logger.info('Loaded image commands!')
+
+async def teardown(bot):
+    await bot.remove_cog('GlassPictures')
+    logger.info('Unloaded image commands.')
