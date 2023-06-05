@@ -59,6 +59,7 @@ async def on_ready():
     await glass.load_extension('extensions.glassdadjokes')
     await glass.load_extension('extensions.glassconsole')
     await glass.load_extension('extensions.glasspictures')
+    await glass.load_extension('extensions.glassplonk')
     game = discord.Activity(type=discord.ActivityType.watching, name='myself think', state='It\'s dark in here')
     await glass.change_presence(status=discord.Status.do_not_disturb, activity=game)
 
@@ -73,6 +74,7 @@ async def shutdown(ctx: discord.ext.commands.Context):
     await glass.unload_extension('extensions.glassdadjokes')
     await glass.unload_extension('extensions.glassconsole')
     await glass.unload_extension('extensions.glasspictures')
+    await glass.unload_extension('extensions.glassplonk')
     await glass.close()
 
 
@@ -250,9 +252,9 @@ if __name__ == '__main__':
     with open('token.txt', 'r') as f:
         token = f.read()
         if token == '':
-            print("No token! Please put a login token in token.txt")
+            logger.critical("No token! Please put a login token in token.txt")
             exit(0)
     try:
         glass.run(token)
     except discord.errors.LoginFailure as login_error:
-        print(login_error)
+        logger.critical(login_error)
