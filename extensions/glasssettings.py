@@ -14,7 +14,7 @@ class GlassSettings(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def allow(self, ctx: discord.ext.commands.Context):
+    async def allow(self, ctx: commands.Context):
         """Allow the bot to do things in a the channel this command was invoked from."""
         if not (ctx.message.author.guild_permissions.manage_channels or ctx.message.author.guild_permissions.administrator):
             await ctx.send('You need to have the Manage Channels permission to change this setting.')
@@ -26,7 +26,7 @@ class GlassSettings(commands.Cog):
             await ctx.send(str(exception))
     
     @commands.command()
-    async def deny(self, ctx: discord.ext.commands.Context):
+    async def deny(self, ctx: commands.Context):
         """Ban the bot from doing things in the channel this command was invoked from."""
         if not (ctx.message.author.guild_permissions.manage_channels or ctx.message.author.guild_permissions.administrator):
             await ctx.send('You need to have the Manage Channels permission to change this setting.')
@@ -38,7 +38,7 @@ class GlassSettings(commands.Cog):
             await ctx.send(str(exception))
     
     @commands.command()
-    async def log(self, ctx: discord.ext.commands.Context):
+    async def log(self, ctx: commands.Context):
         """Tell the bot to record edited messages and deleted messages in the channel this command was invoked from."""
         if not (ctx.message.author.guild_permissions.administrator or ctx.message.author.guild_permissions.manage_server):
             await ctx.send('You need to have the Manage Server permission to change this setting.')
@@ -50,7 +50,7 @@ class GlassSettings(commands.Cog):
             await ctx.send(str(exception))
 
     @commands.command()
-    async def unlog(self, ctx: discord.ext.commands.Context):
+    async def unlog(self, ctx: commands.Context):
         """Tell the bot to stop recording edits and deletions for this server."""
         if not (ctx.message.author.guild_permissions.administrator or ctx.message.author.guild_permissions.manage_server):
             await ctx.send('You need to have the Manage Server permission to change this setting.')
@@ -91,7 +91,6 @@ class GlassSettings(commands.Cog):
             embed.add_field(name = f'Attachment: {attachment.filename}', value = attachment.url, inline = False)
         embed.set_footer(text = f'{message.author.name}#{message.author.discriminator} • {datetime.utcnow().strftime("%m/%d/%Y %I:%M %p")}', icon_url = message.author.avatar.url)
         await self.bot.get_channel(log_dict[str(message.guild.id)]).send(embed = embed)
-        
 
 
 async def setup(bot):
@@ -100,4 +99,5 @@ async def setup(bot):
 
 async def teardown(bot):
     await bot.remove_cog('GlassSettings')
+    save()
     logger.info('Unloaded configuration commands.')
