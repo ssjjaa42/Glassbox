@@ -78,7 +78,7 @@ class GlassPlonk(commands.Cog):
             await ctx.send('Your swears are no longer logged.')
 
     @plonk.command(name='reset')
-    async def reset(self, ctx: commands.Context, quantity=0):
+    async def reset(self, ctx: commands.Context, quantity=0.0):
         if swear_jars.get_channel(ctx.author.id) is None:
             await ctx.send('Your swears are not logged.')
         else:
