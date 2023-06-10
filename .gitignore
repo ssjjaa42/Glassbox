@@ -3,4 +3,5 @@
 /data/settings/
 /data/misc/
 token.txt
+tenor_api_token.txt
 *__pycache__*
