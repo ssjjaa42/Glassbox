@@ -112,6 +112,8 @@ def inspirational_meme(image_url, header='', body=''):
     except AttributeError:
         animated = False
     if animated:
+        if image.size[0] > 1280 or image.size[1] > 720:
+            raise UserWarning('Image too large!')
         frames = []
         for frame_num in range(image.n_frames):
             image.seek(frame_num)
@@ -205,6 +207,8 @@ def caption(image_url: str, caption=''):
     except AttributeError:
         animated = False
     if animated:
+        if image.size[0] > 1280 or image.size[1] > 720:
+            raise UserWarning('Image too large!')
         frames = []
         for frame_num in range(image.n_frames):
             image.seek(frame_num)

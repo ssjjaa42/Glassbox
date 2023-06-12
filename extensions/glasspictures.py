@@ -16,7 +16,7 @@ class GlassPictures(commands.Cog):
         if len(ctx.message.attachments) > 1:
             raise LookupError('Too many images attached!')
         elif len(ctx.message.attachments) == 1:
-            image_url = str(ctx.message.attachments[0])
+            image_url = ctx.message.attachments[0].url
         elif len(ctx.message.attachments) == 0 and text.startswith('https://'):
             words = text.split(' ')
             image_url = words[0]
@@ -26,7 +26,7 @@ class GlassPictures(commands.Cog):
             if len(message.attachments) > 1:
                 raise LookupError('Too many images attached!')
             elif len(message.attachments) == 1:
-                image_url = str(message.attachments[0])
+                image_url = message.attachments[0].url
             elif len(message.attachments) == 0 and message.content.startswith('https://'):
                 words = message.content.split(' ')
                 image_url = words[0]
