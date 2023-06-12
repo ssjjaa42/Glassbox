@@ -2,6 +2,7 @@
 # by ssjjaa
 
 import os
+import datetime
 import logging
 import random
 import discord
@@ -13,13 +14,24 @@ intents = discord.Intents.default()
 intents.message_content = True
 glass = commands.Bot(command_prefix='$', intents=intents)
 
+if not os.path.exists(os.path.join(os.path.curdir, 'logs')):
+    os.makedirs(os.path.join(os.path.curdir, 'logs'))
 logger = logging.getLogger('glassbox')
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
+lh = logging.FileHandler('latest.log', 'w')
+fh = logging.FileHandler(os.path.join(os.path.curdir, 'logs', datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log')), 'w')
 ch.setLevel(logging.DEBUG)
+lh.setLevel(logging.DEBUG)
+fh.setLevel(logging.DEBUG)
 formatter = logging.Formatter(f'%(asctime)s %(levelname)s\t\b\b\b%(name)s %(message)s', '%Y-%m-%d %H:%M:%S')
+file_formatter = logging.Formatter(f'%(asctime)s %(levelname)s\t%(name)s %(message)s', '%Y-%m-%d %H:%M:%S')
 ch.setFormatter(formatter)
+lh.setFormatter(file_formatter)
+fh.setFormatter(file_formatter)
 logger.addHandler(ch)
+logger.addHandler(lh)
+logger.addHandler(fh)
 
 rand = random.Random()
 # s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
@@ -43,9 +55,13 @@ async def log_message(message: discord.Message):
     """Prints a message to the log, sanitizing it first. Also prints the author, current server and channel."""
     global last_channel
     if message.channel != last_channel:
-        logger.info(f'{message.guild.name} / {message.channel.name}')
+        logger.info(f'{message.guild.name} / #{message.channel.name}')
         last_channel = message.channel
-    logger.info(f'    {message.author.display_name}: {sanitize_text(message.content)}')
+    logger.info(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): {sanitize_text(message.clean_content)}')
+    if len(message.attachments) > 0:
+        logger.info(f'     |  Files attached:')
+        for attachment in message.attachments:
+            logger.info(f'     |      {attachment.filename} ({attachment.url})')
 
 
 @glass.event

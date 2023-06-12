@@ -2,6 +2,8 @@
 /data/serverfiles/
 /data/settings/
 /data/misc/
+/logs/
+latest.log
 token.txt
 tenor_api_token.txt
 *__pycache__*
