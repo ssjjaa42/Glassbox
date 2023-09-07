@@ -20,7 +20,8 @@ logger = logging.getLogger('glassbox')
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 lh = logging.FileHandler('latest.log', 'w')
-fh = logging.FileHandler(os.path.join(os.path.curdir, 'logs', datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log')), 'w')
+fh = logging.FileHandler(os.path.join(os.path.curdir, 'logs',
+                                      datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S.log')), 'w')
 ch.setLevel(logging.DEBUG)
 lh.setLevel(logging.DEBUG)
 fh.setLevel(logging.DEBUG)
@@ -57,7 +58,8 @@ async def log_message(message: discord.Message):
     if message.channel != last_channel:
         logger.info(f'{message.guild.name} / #{message.channel.name}')
         last_channel = message.channel
-    logger.info(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): {sanitize_text(message.clean_content)}')
+    logger.info(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): '
+                f'{sanitize_text(message.clean_content())}')
     if len(message.attachments) > 0:
         logger.info(f'     |  Files attached:')
         for attachment in message.attachments:
@@ -96,7 +98,7 @@ async def shutdown(ctx: discord.ext.commands.Context):
 
 @glass.command()
 async def roll(ctx: discord.ext.commands.Context, *, text=''):
-    """Roll a n-sided die, with optional modifier.
+    """Roll an n-sided die, with optional modifier.
 
     Format is $roll NdS, or $roll NdS+M. Negative modifiers work.
     """
@@ -115,9 +117,9 @@ async def roll(ctx: discord.ext.commands.Context, *, text=''):
         total = 0
         rolls = ''
         for i in range(num):
-            roll = rand.randint(1, sides)
-            total += roll
-            rolls += str(roll)
+            num_roll = rand.randint(1, sides)
+            total += num_roll
+            rolls += str(num_roll)
             if i+1 < num:
                 rolls += ', '
         total += modifier
@@ -178,9 +180,11 @@ async def on_message(message):
 
     # DO NOT ENTER FORBIDDEN PLACES (commands are still ok, though.)
     if message.channel.id in settings.forbidden():
-        # Note to self. This process_commands is absolutely necessary! Without this, forbidden channels will respond to NO commands.
+        # Note to self. This process_commands is absolutely necessary! Without this, forbidden channels will respond to
+        # NO commands.
         # If you want a COMMAND to not run in forbidden channels, please check ctx.channel.id in the command.
-        # The process_commands should not be run in ANY other checks, or else it will genuinely run commands multiple times.
+        # The process_commands should not be run in ANY other checks, or else it will genuinely run commands multiple
+        # times.
         await glass.process_commands(message)
         return
 

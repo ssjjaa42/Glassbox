@@ -26,33 +26,32 @@ def forbidden():
     return forbidden_ids
 
 
-def add_forbidden(id: int): 
-    if id not in forbidden_ids:
-        forbidden_ids.append(id)
+def add_forbidden(cid: int):
+    if cid not in forbidden_ids:
+        forbidden_ids.append(cid)
     else:
         raise IndexError('The given ID was already on the blacklist.')
 
 
-def remove_forbidden(id: int):
-    if id not in forbidden_ids:
+def remove_forbidden(cid: int):
+    if cid not in forbidden_ids:
         raise IndexError('The given ID was not on the blacklist.')
     else:
-        forbidden_ids.remove(id)
+        forbidden_ids.remove(cid)
 
 
 def logging():
     return log_dict
 
 
-def add_logging(guild: int, id: int):
-    log_dict = logging()
+def add_logging(guild: int, cid: int):
     guild = str(guild)
     if guild not in log_dict.keys():
-        log_dict[guild] = id
-    elif log_dict[guild] == id:
+        log_dict[guild] = cid
+    elif log_dict[guild] == cid:
         raise IndexError('Already logging this server to this channel.')
     else:
-        log_dict[guild] = id
+        log_dict[guild] = cid
 
 
 def clear_logging(guild: int):
@@ -64,8 +63,8 @@ def clear_logging(guild: int):
 
 
 def save():
-    '''Save settings to their respective files.'''
-    with open(forbidden_path, 'w') as f:
-        json.dump(forbidden_ids, f)
-    with open(logging_path, 'w') as f:
-        json.dump(log_dict, f)
+    """Save settings to their respective files."""
+    with open(forbidden_path, 'w') as file:
+        json.dump(forbidden_ids, file)
+    with open(logging_path, 'w') as file:
+        json.dump(log_dict, file)

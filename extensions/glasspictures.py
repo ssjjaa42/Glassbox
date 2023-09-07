@@ -2,9 +2,34 @@
 import logging
 import discord
 from discord.ext import commands
-from modules.pictures import *
+import modules.pictures as pictures
 
 logger = logging.getLogger('glassbox')
+
+
+async def _get_image(ctx: commands.Context, text=''):
+    image_url = ''
+    if len(ctx.message.attachments) > 1:
+        raise LookupError('Too many images attached!')
+    elif len(ctx.message.attachments) == 1:
+        image_url = ctx.message.attachments[0].url
+    elif len(ctx.message.attachments) == 0 and text.startswith('https://'):
+        words = text.split(' ')
+        image_url = words[0]
+        text = ' '.join(words[1:])
+    elif ctx.message.reference:
+        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+        if len(message.attachments) > 1:
+            raise LookupError('Too many images attached!')
+        elif len(message.attachments) == 1:
+            image_url = message.attachments[0].url
+        elif len(message.attachments) == 0 and message.content.startswith('https://'):
+            words = message.content.split(' ')
+            image_url = words[0]
+    else:
+        raise LookupError('No image provided!')
+    return image_url, text
+
 
 class GlassPictures(commands.Cog):
     """Image-related commands for a Discord bot."""
@@ -12,35 +37,13 @@ class GlassPictures(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def _get_image(self, ctx: commands.Context, text=''):
-        if len(ctx.message.attachments) > 1:
-            raise LookupError('Too many images attached!')
-        elif len(ctx.message.attachments) == 1:
-            image_url = ctx.message.attachments[0].url
-        elif len(ctx.message.attachments) == 0 and text.startswith('https://'):
-            words = text.split(' ')
-            image_url = words[0]
-            text = ' '.join(words[1:])
-        elif ctx.message.reference:
-            message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-            if len(message.attachments) > 1:
-                raise LookupError('Too many images attached!')
-            elif len(message.attachments) == 1:
-                image_url = message.attachments[0].url
-            elif len(message.attachments) == 0 and message.content.startswith('https://'):
-                words = message.content.split(' ')
-                image_url = words[0]
-        else:
-            raise LookupError('No image provided!')
-        return (image_url, text)
-
     @commands.command()
     async def downey(self, ctx: commands.Context, *, text=''):
         """Robert Downey, Jr. Explaining meme generator."""
         try:
             await ctx.message.delete()
             await ctx.typing()
-            pic_path = downey_meme(text)
+            pic_path = pictures.downey_meme(text)
             await ctx.send(file=discord.File(pic_path))
         except UserWarning as exception:
             await ctx.send(str(exception))
@@ -54,7 +57,7 @@ class GlassPictures(commands.Cog):
         The bottom row of text (and the pipe character) is optional.
         """
         try:
-            image_url, text = await self._get_image(ctx, text)
+            image_url, text = await _get_image(ctx, text)
         except LookupError as exception:
             await ctx.send(str(exception))
             return
@@ -66,11 +69,10 @@ class GlassPictures(commands.Cog):
         try:
             await ctx.message.delete()
             await ctx.typing()
-            pic_path = inspirational_meme(image_url, header, body)
+            pic_path = pictures.inspirational_meme(image_url, header, body)
             await ctx.send(file=discord.File(pic_path))
         except (UserWarning, LookupError) as exception:
             await ctx.send(str(exception))
-        
 
     @commands.command()
     async def caption(self, ctx: commands.Context, *, text=''):
@@ -80,21 +82,23 @@ class GlassPictures(commands.Cog):
         Tenor GIFs are also OK.
         """
         try:
-            image_url, text = await self._get_image(ctx, text)
+            image_url, text = await _get_image(ctx, text)
         except LookupError as exception:
             await ctx.send(str(exception))
             return
         try:
             await ctx.message.delete()
             await ctx.typing()
-            pic_path = caption(image_url, text)
+            pic_path = pictures.caption(image_url, text)
             await ctx.send(file=discord.File(pic_path))
         except (UserWarning, LookupError) as exception:
             await ctx.send(str(exception))
 
+
 async def setup(bot):
     await bot.add_cog(GlassPictures(bot))
     logger.info('Loaded image commands!')
+
 
 async def teardown(bot):
     await bot.remove_cog('GlassPictures')

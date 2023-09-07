@@ -46,7 +46,8 @@ def set_increment(user_id: int, increment: float):
 
 
 def check_word(word: str):
-    swears = ['crap', 'shit', 'fuck', 'cunt', 'shitting', 'fucking', 'fucked', 'crapped', 'crapping', 'fucks', 'shits', 'whore', 'whores', 'whoring', 'bitch', 'bitches', 'bitched', 'bitching', 'ass', 'asses', 'bullshit']
+    swears = ['crap', 'shit', 'fuck', 'cunt', 'shitting', 'fucking', 'fucked', 'crapped', 'crapping', 'fucks', 'shits',
+              'whore', 'whores', 'whoring', 'bitch', 'bitches', 'bitched', 'bitching', 'ass', 'asses', 'bullshit']
     if word.lower() in swears:
         return True
     else:
@@ -54,5 +55,5 @@ def check_word(word: str):
 
 
 def save():
-    with open(jar_path, 'w') as f:
-        json.dump(jars_dict, f)
+    with open(jar_path, 'w') as file:
+        json.dump(jars_dict, file)

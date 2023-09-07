@@ -7,8 +7,9 @@ from modules.settings import forbidden
 
 logger = logging.getLogger('glassbox')
 
+
 class GlassPlonk(commands.Cog):
-    '''Extension to let bots keep track of bad word usage, on a per-user basis.'''
+    """Extension to let bots keep track of bad word usage, on a per-user basis."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -45,7 +46,8 @@ class GlassPlonk(commands.Cog):
         # Send the response
         if message.channel.id != swear_jars.get_channel(message.author.id):
             await message.reply(response)
-        await self.bot.get_channel(swear_jars.get_channel(message.author.id)).send(f'{response}\n{message.author.mention} now owes ${swear_jars.get_quantity(message.author.id):.2f}!')
+        await self.bot.get_channel(swear_jars.get_channel(message.author.id)).send(
+            f'{response}\n{message.author.mention} now owes ${swear_jars.get_quantity(message.author.id):.2f}!')
         
     @commands.group()
     async def plonk(self, ctx: commands.Context):
@@ -58,7 +60,8 @@ class GlassPlonk(commands.Cog):
         swear_jars.update(ctx.author.id)
         if ctx.channel.id != swear_jars.get_channel(ctx.author.id):
             await ctx.reply('Plonk!')
-        await self.bot.get_channel(swear_jars.get_channel(ctx.author.id)).send(f'Plonk!\n{ctx.author.mention} now owes ${swear_jars.get_quantity(ctx.author.id):.2f}!')
+        await self.bot.get_channel(swear_jars.get_channel(ctx.author.id)).send(
+            f'Plonk!\n{ctx.author.mention} now owes ${swear_jars.get_quantity(ctx.author.id):.2f}!')
     
     @plonk.command(name='on')
     async def enable(self, ctx: commands.Context):
@@ -73,7 +76,7 @@ class GlassPlonk(commands.Cog):
         if swear_jars.get_channel(ctx.author.id) is None:
             await ctx.send('Your swears are not logged.')
         else:
-            swear_jars.set_channel(ctx.author.id, None)
+            swear_jars.set_channel(ctx.author.id, -1)
             swear_jars.set_quantity(ctx.author.id, 0)
             await ctx.send('Your swears are no longer logged.')
 
@@ -89,6 +92,7 @@ class GlassPlonk(commands.Cog):
 async def setup(bot: commands.Bot):
     await bot.add_cog(GlassPlonk(bot))
     logger.info('Loaded swear jars!')
+
 
 async def teardown(bot: commands.Bot):
     await bot.remove_cog('GlassPlonk')

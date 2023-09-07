@@ -16,14 +16,15 @@ defense_dict = {
     'i`ve': 'you\'ve, in addition to used weird symbols,'
 }
 
+
 def triggers_dad(message: str):
-    """Returns a boolean depending on whether or not a given string is food for a dad joke."""
+    """Returns a boolean depending on whether a given string is food for a dad joke."""
     message = message.lower() + ' '
-    if message.startswith('i\'m ') \
-        or message.startswith('im ') \
-        or message.startswith('i’m ') \
-        or message.startswith('i`m ') \
-        or message.startswith('i am '):
+    if message.startswith('i\'m ') or \
+            message.startswith('im ') or \
+            message.startswith('i’m ') or \
+            message.startswith('i`m ') or \
+            message.startswith('i am '):
         return True
     else:
         return False
@@ -41,11 +42,11 @@ def parse_name(message: str):
     # Cut the beginnings off
     # "i'm so tired" becomes "so tired" after this
     # "i'm i'm stupid" becomes "stupid" after this
-    while message.startswith('i\'m ') \
-        or message.startswith('im ') \
-        or message.startswith('i’m ') \
-        or message.startswith('i`m ') \
-        or message.startswith('i am '):
+    while message.startswith('i\'m ') or \
+            message.startswith('im ') or \
+            message.startswith('i’m ') or \
+            message.startswith('i`m ') or \
+            message.startswith('i am '):
         if message.startswith('i am '):
             message = message[5:].strip() + ' '
         elif message.startswith('im '):

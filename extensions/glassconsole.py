@@ -7,6 +7,7 @@ from modules.console import Console
 
 logger = logging.getLogger('glassbox')
 
+
 class GlassConsole(commands.Cog):
     """Console-related commands for a Discord bot."""
 
@@ -156,6 +157,7 @@ class GlassConsole(commands.Cog):
 async def setup(bot):
     await bot.add_cog(GlassConsole(bot))
     logger.info('Loaded console commands!')
+
 
 async def teardown(bot):
     await bot.remove_cog('GlassConsole')

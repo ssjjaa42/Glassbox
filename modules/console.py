@@ -107,7 +107,8 @@ class Console:
         for c in '`~:?*\\\'\"<>| ':
             if c in name or name[0] == '.':
                 raise PermissionError(f'Illegal file name. File names cannot contain \"{c}\".')
-        target_path = p.relpath(p.abspath(p.join(self.root, self.folder, p.split(path)[0], name)), start=p.abspath(self.root))
+        target_path = p.relpath(p.abspath(p.join(self.root, self.folder, p.split(path)[0], name)),
+                                start=p.abspath(self.root))
         # Stop them if they're trying to escape their server
         if target_path.startswith('..'):
             raise NotADirectoryError('Invalid path.')
@@ -128,7 +129,7 @@ class Console:
             with open(p.join(self.root, target_path), 'w') as file:
                 file.write(url)
 
-    def mv(self, source:str, target:str, owner: int):
+    def mv(self, source: str, target: str, owner: int):
         """Rename a file, or move it to a new location.
 
         Raises NameError if one or both arguments are not given.

@@ -18,7 +18,9 @@ if not os.path.exists('tenor_api_token.txt'):
 with open('tenor_api_token.txt', 'r') as f:
     api_token = f.read()
     if api_token == '':
-        logger.error("No Tenor API token! This module may not work properly. Please put a developer token in tenor_api_token.txt")
+        logger.error("No Tenor API token! This module may not work properly. "
+                     "Please put a developer token in tenor_api_token.txt")
+
 
 def wrap_text(text: str, font: ImageFont.FreeTypeFont, line_length: int, max_height: int):
     lines = ['']
@@ -41,21 +43,20 @@ def downey_meme(text, fnt_size=48):
         raise UserWarning('No text given.')
     downey = Image.open(path.join(path.curdir, 'data', 'images', 'downey.jpg'))
     downey_draw = ImageDraw.Draw(downey)
-    min = 18
-    max = 48
-    last_size = -1
-    while abs(max-min) > 1:
+    min_size = 18
+    max_size = 48
+    while abs(max_size-min_size) > 1:
         fnt = ImageFont.truetype(path.join('data', 'fonts', 'arialbd.ttf'), int(fnt_size))
         try:
-            wrapped_text = wrap_text(text, fnt, 500, 240)
+            wrap_text(text, fnt, 500, 240)
             # The size is too small
-            min = fnt_size
-            fnt_size = int((fnt_size + max) / 2)
+            min_size = fnt_size
+            fnt_size = int((fnt_size + max_size) / 2)
         except UserWarning:
             # The size is too big
             if fnt_size > 18:
-                max = fnt_size
-                fnt_size = int((fnt_size + min) / 2)
+                max_size = fnt_size
+                fnt_size = int((fnt_size + min_size) / 2)
             else:
                 raise UserWarning('Input text too long.')
     fnt = ImageFont.truetype(path.join('data', 'fonts', 'arialbd.ttf'), int(fnt_size))
@@ -90,7 +91,7 @@ def inspirational_meme(image_url, header='', body=''):
     size_bad = True
     while size_bad:
         try:
-            wrapped = wrap_text(header.upper(), fnt_head, 0.9*x, 0.11*y)
+            wrapped = wrap_text(header.upper(), fnt_head, int(0.9*x), int(0.11*y))
             if '\n' in wrapped:
                 fnt_head = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), fnt_head.size - 1)
             else: 
@@ -100,7 +101,7 @@ def inspirational_meme(image_url, header='', body=''):
     size_bad = True
     while size_bad and body != '':
         try:
-            wrapped = wrap_text(body.upper(), fnt_body, 0.9*x, 0.07*y)
+            wrapped = wrap_text(body.upper(), fnt_body, int(0.9*x), int(0.07*y))
             if '\n' in wrapped:
                 fnt_body = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), fnt_body.size - 1)
             else: 
@@ -135,7 +136,9 @@ def inspirational_meme(image_url, header='', body=''):
                 text=body.upper(),
                 fill=(240, 240, 240), font=fnt_body, anchor='ma',
             )
-            canvas = canvas.crop((0, 0, x, image.size[1]*1.5*0.79 + 1.5*fnt_head.getbbox(header.upper(), anchor='la')[3] + 1.5*fnt_body.getbbox(header.upper(), anchor='la')[3]))
+            canvas = canvas.crop((0, 0, x, int(image.size[1]*1.5*0.79 +
+                                               1.5*fnt_head.getbbox(header.upper(), anchor='la')[3] +
+                                               1.5*fnt_body.getbbox(header.upper(), anchor='la')[3])))
             canvas = canvas.convert(mode='P', palette=Image.ADAPTIVE)
             frames.append(canvas)
         fp = path.join(path.curdir, 'data', 'tmp', 'tmp_inspirational.gif')
@@ -159,7 +162,9 @@ def inspirational_meme(image_url, header='', body=''):
             text=body.upper(),
             fill=(240, 240, 240), font=fnt_body, anchor='ma',
         )
-        canvas = canvas.crop((0, 0, x, image.size[1]*1.5*0.79 + 1.5*fnt_head.getbbox(header.upper(), anchor='la')[3] + 1.5*fnt_body.getbbox(header.upper(), anchor='la')[3]))
+        canvas = canvas.crop((0, 0, x, int(image.size[1]*1.5*0.79 +
+                                           1.5*fnt_head.getbbox(header.upper(), anchor='la')[3] +
+                                           1.5*fnt_body.getbbox(header.upper(), anchor='la')[3])))
         fp = path.join(path.curdir, 'data', 'tmp', 'tmp_inspirational.jpg')
         canvas.save(fp)
     return fp
@@ -172,8 +177,8 @@ def get_tenor_true_url(raw_url: str):
     gif_id = raw_url.split('-')[-1]
     url = f'https://tenor.googleapis.com/v2/posts?ids={gif_id}&key={api_token}'
     request_site = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    web_URL = urllib.request.urlopen(request_site)
-    resp = json.loads(web_URL.read().decode(web_URL.info().get_content_charset('utf-8')))
+    web_url = urllib.request.urlopen(request_site)
+    resp = json.loads(web_url.read().decode(web_url.info().get_content_charset('utf-8')))
     if resp.get('error'):
         error_msg = resp['error']
         raise LookupError(error_msg)
@@ -181,8 +186,8 @@ def get_tenor_true_url(raw_url: str):
     return resp['results'][0]['media_formats']['gif']['url']
 
 
-def caption(image_url: str, caption=''):
-    if caption == '':
+def caption(image_url: str, cap=''):
+    if cap == '':
         raise UserWarning('No caption provided!')
     if image_url.startswith('https://tenor.com/view/'):
         image_url = get_tenor_true_url(image_url)
@@ -197,7 +202,7 @@ def caption(image_url: str, caption=''):
     font_size = round((image.size[1] / 7.2) * 0.75)
     fnt = ImageFont.truetype(path.join('data', 'fonts', 'impact.ttf'), font_size)
     try:
-        wrapped_text = wrap_text(caption, fnt, round(image.size[0] * 0.9), 8192)
+        wrapped_text = wrap_text(cap, fnt, round(image.size[0] * 0.9), 8192)
     except UserWarning:
         raise UserWarning('Input text too long.')
     x = image.size[0]
@@ -214,12 +219,12 @@ def caption(image_url: str, caption=''):
             image.seek(frame_num)
             canvas = Image.new('RGB', (x, y))
             draw = ImageDraw.Draw(canvas)
-            draw.rectangle((0, 0, x, y), fill=(255,255,255))
+            draw.rectangle((0, 0, x, y), fill=(255, 255, 255))
             canvas.paste(image, (0, y - image.size[1]))
             draw.text(
                 xy=(round(x/2), round((y - image.size[1]) / 1.1)),
                 text=wrapped_text,
-                fill = (0, 0, 0), font=fnt, anchor='md', align='center'
+                fill=(0, 0, 0), font=fnt, anchor='md', align='center'
             )
             canvas = canvas.convert(mode='P', palette=Image.ADAPTIVE)
             frames.append(canvas)
@@ -228,12 +233,12 @@ def caption(image_url: str, caption=''):
     else:
         canvas = Image.new('RGB', (x, y))
         draw = ImageDraw.Draw(canvas)
-        draw.rectangle((0, 0, x, y), fill=(255,255,255))
+        draw.rectangle((0, 0, x, y), fill=(255, 255, 255))
         canvas.paste(image, (0, y - image.size[1]))
         draw.text(
             xy=(round(x/2), round((y - image.size[1]) / 1.1)),
             text=wrapped_text,
-            fill = (0, 0, 0), font=fnt, anchor='md', align='center'
+            fill=(0, 0, 0), font=fnt, anchor='md', align='center'
         )
         fp = path.join(path.curdir, 'data', 'tmp', 'tmp_captioned.png')
         canvas.save(fp)
