@@ -62,5 +62,9 @@ def parse_name(message: str):
             raise ValueError('Invalid name.')
     # Capitalize the name
     name = message.capitalize()
+    # Last check: Is the name too long? The dad joke works best with short statements like
+    # "I'm tired", "I'm so frustrated", etc. and not "I'm going to harm the developers of this game"
+    if len(name[:-1]) > 20:
+        raise ValueError('Name too long.')
     # Return name
     return name[:-1]
