@@ -76,8 +76,10 @@ class GlassPlonk(commands.Cog):
         if swear_jars.get_channel(ctx.author.id) is None:
             await ctx.send('Your swears are not logged.')
         else:
-            swear_jars.set_channel(ctx.author.id, -1)
-            swear_jars.set_quantity(ctx.author.id, 0)
+            # TODO check and see, does this produce expected behavior?
+            # swear_jars.set_channel(ctx.author.id, -1)
+            # swear_jars.set_quantity(ctx.author.id, 0)
+            del swear_jars.jars_dict[str(ctx.author.id)]
             await ctx.send('Your swears are no longer logged.')
 
     @plonk.command(name='reset')
@@ -87,6 +89,16 @@ class GlassPlonk(commands.Cog):
         else:
             swear_jars.set_quantity(ctx.author.id, quantity)
             await ctx.send(f'You now owe ${swear_jars.get_quantity(ctx.author.id):.2f}.')
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        logger.info(f'glassplonk: Removed from guild {guild}! Removing swear jars in this server...')
+        for user_id in swear_jars.jars_dict:
+            if swear_jars.jars_dict[user_id][0] in [channel.id for channel in guild.channels]:
+                await guild.get_member(int(user_id)).dm_channel.send(f'I\'ve been removed from the server containing '
+                                                                     f'your swear jar. At that time, you owed '
+                                                                     f'${swear_jars.get_quantity(int(user_id)):.2f}.')
+                del swear_jars.jars_dict[user_id]
 
 
 async def setup(bot: commands.Bot):

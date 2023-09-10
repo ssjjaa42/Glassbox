@@ -1,5 +1,6 @@
 # Console commands for Glassbox
 import os
+import shutil
 import logging
 import discord
 from discord.ext import commands
@@ -152,6 +153,13 @@ class GlassConsole(commands.Cog):
             await ctx.send(self._consoles[ctx.guild.id].retrieve_file(path))
         except FileNotFoundError as exception:
             await ctx.send(str(exception))
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        logger.info(f'glassconsole: Removed from guild {guild}! Deleting user files...')
+        server_dir = os.path.join(os.path.curdir, 'data', 'serverfiles', str(guild.id))
+        if os.path.exists(server_dir):
+            shutil.rmtree(server_dir)
 
 
 async def setup(bot):

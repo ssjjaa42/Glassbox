@@ -3,6 +3,7 @@
 /data/settings/
 /data/misc/
 /logs/
+extensions.json
 latest.log
 token.txt
 tenor_api_token.txt

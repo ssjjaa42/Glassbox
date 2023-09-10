@@ -2,6 +2,7 @@
 # by ssjjaa
 
 import os
+import json
 import datetime
 import logging
 import random
@@ -34,6 +35,14 @@ logger.addHandler(ch)
 logger.addHandler(lh)
 logger.addHandler(fh)
 
+extensions_config_path = 'extensions.json'
+if not os.path.exists(extensions_config_path):
+    with open(extensions_config_path, 'x') as f:
+        f.write('[\"glasssettings\"]')
+    logger.error(f'{extensions_config_path} does not exist! The file has been created. '
+                 f'This bot will have minimal functionality.')
+    logger.error(f'Use $reload to apply changes made to {extensions_config_path}.')
+
 rand = random.Random()
 # s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
 last_channel = None
@@ -56,14 +65,14 @@ async def log_message(message: discord.Message):
     """Prints a message to the log, sanitizing it first. Also prints the author, current server and channel."""
     global last_channel
     if message.channel != last_channel:
-        logger.info(f'{message.guild.name} / #{message.channel.name}')
+        logger.debug(f'{message.guild.name} / #{message.channel.name}')
         last_channel = message.channel
-    logger.info(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): '
-                f'{sanitize_text(message.clean_content)}')
+    logger.debug(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): '
+                 f'{sanitize_text(message.clean_content)}')
     if len(message.attachments) > 0:
-        logger.info(f'     |  Files attached:')
+        logger.debug(f'     |  Files attached:')
         for attachment in message.attachments:
-            logger.info(f'     |      {attachment.filename} ({attachment.url})')
+            logger.debug(f'     |      {attachment.filename} ({attachment.url})')
 
 
 @glass.event
@@ -73,11 +82,10 @@ async def on_ready():
     This should only run once. I'm not sure if it actually will, though.
     """
     logger.info(f'Connected as {glass.user}!')
-    await glass.load_extension('extensions.glasssettings')
-    await glass.load_extension('extensions.glassdadjokes')
-    await glass.load_extension('extensions.glassconsole')
-    await glass.load_extension('extensions.glasspictures')
-    await glass.load_extension('extensions.glassplonk')
+    with open(extensions_config_path) as file:
+        extensions_to_load = json.load(file)
+    for extension in extensions_to_load:
+        await glass.load_extension(f'extensions.{extension}')
     game = discord.Activity(type=discord.ActivityType.watching, name='myself think', state='It\'s dark in here')
     await glass.change_presence(status=discord.Status.do_not_disturb, activity=game)
 
@@ -85,15 +93,26 @@ async def on_ready():
 @glass.command()
 @commands.is_owner()
 async def shutdown(ctx: discord.ext.commands.Context):
-    # TODO move this enumeration of extensions from hard-coding to a settings file
     await ctx.send('Shutting down...')
     logger.info('Shutting down...')
-    await glass.unload_extension('extensions.glasssettings')
-    await glass.unload_extension('extensions.glassdadjokes')
-    await glass.unload_extension('extensions.glassconsole')
-    await glass.unload_extension('extensions.glasspictures')
-    await glass.unload_extension('extensions.glassplonk')
+    exts = list(glass.extensions.keys())
+    for extension in exts:
+        await glass.unload_extension(extension)
     await glass.close()
+
+
+@glass.command()
+@commands.is_owner()
+async def reload(ctx: discord.ext.commands.Context):
+    await ctx.send('Reloading extensions...')
+    logger.info('Reloading extensions...')
+    exts = list(glass.extensions.keys())
+    for extension in exts:
+        await glass.unload_extension(extension)
+    with open(extensions_config_path) as file:
+        extensions_to_load = json.load(file)
+    for extension in extensions_to_load:
+        await glass.load_extension(f'extensions.{extension}')
 
 
 @glass.command()

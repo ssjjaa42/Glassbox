@@ -97,6 +97,19 @@ class GlassSettings(commands.Cog):
                               f'{datetime.utcnow().strftime("%m/%d/%Y %I:%M %p")}', icon_url=message.author.avatar.url)
         await self.bot.get_channel(logging()[str(message.guild.id)]).send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        logger.info(f'glasssettings: Removed from guild {guild}! Clearing settings for this guild...')
+        try:
+            clear_logging(guild.id)
+        except IndexError:
+            pass
+        for channel in guild.channels:
+            try:
+                remove_forbidden(channel.id)
+            except IndexError:
+                pass
+
 
 async def setup(bot):
     await bot.add_cog(GlassSettings(bot))
