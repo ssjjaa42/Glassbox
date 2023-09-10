@@ -25,7 +25,7 @@ fh = logging.FileHandler(os.path.join(os.path.curdir, 'logs',
 ch.setLevel(logging.DEBUG)
 lh.setLevel(logging.DEBUG)
 fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter(f'%(asctime)s %(levelname)s\t\b\b\b%(name)s %(message)s', '%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter(f'%(asctime)s %(levelname)s\t%(name)s %(message)s', '%Y-%m-%d %H:%M:%S')
 file_formatter = logging.Formatter(f'%(asctime)s %(levelname)s\t%(name)s %(message)s', '%Y-%m-%d %H:%M:%S')
 ch.setFormatter(formatter)
 lh.setFormatter(file_formatter)
@@ -59,7 +59,7 @@ async def log_message(message: discord.Message):
         logger.info(f'{message.guild.name} / #{message.channel.name}')
         last_channel = message.channel
     logger.info(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): '
-                f'{sanitize_text(message.clean_content())}')
+                f'{sanitize_text(message.clean_content)}')
     if len(message.attachments) > 0:
         logger.info(f'     |  Files attached:')
         for attachment in message.attachments:

@@ -94,6 +94,20 @@ class GlassPictures(commands.Cog):
         except (UserWarning, LookupError) as exception:
             await ctx.send(str(exception))
 
+    @commands.command()
+    async def makegif(self, ctx: commands.Context, text=''):
+        try:
+            image_url, text = await _get_image(ctx, text)
+        except LookupError as exception:
+            await ctx.send(str(exception))
+            return
+        try:
+            await ctx.typing()
+            pic_path = pictures.make_gif(image_url)
+            await ctx.send(file=discord.File(pic_path))
+        except (UserWarning, LookupError, ValueError) as exception:
+            await ctx.send(str(exception))
+
 
 async def setup(bot):
     await bot.add_cog(GlassPictures(bot))
