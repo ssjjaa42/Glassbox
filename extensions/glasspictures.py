@@ -95,6 +95,21 @@ class GlassPictures(commands.Cog):
             await ctx.send(str(exception))
 
     @commands.command()
+    async def reverse(self, ctx: commands.Context, *, text=''):
+        try:
+            image_url, text = await _get_image(ctx, text)
+        except LookupError as exception:
+            await ctx.send(str(exception))
+            return
+        try:
+            await ctx.message.delete()
+            await ctx.typing()
+            pic_path = pictures.reverse(image_url)
+            await ctx.send(file=discord.File(pic_path))
+        except (UserWarning, LookupError) as exception:
+            await ctx.send(str(exception))
+
+    @commands.command()
     async def makegif(self, ctx: commands.Context, text=''):
         try:
             image_url, text = await _get_image(ctx, text)

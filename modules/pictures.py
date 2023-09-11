@@ -245,6 +245,36 @@ def caption(image_url: str, cap=''):
     return fp
 
 
+def reverse(image_url: str):
+    if image_url.startswith('https://tenor.com/view/'):
+        image_url = get_tenor_true_url(image_url)
+    req = urllib.request.Request(url=image_url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req) as url:
+        try:
+            image = Image.open(url)
+        except PIL.UnidentifiedImageError:
+            raise UserWarning('Invalid image!')
+    if image.size[0] > 1280 or image.size[1] > 720:
+        raise UserWarning('Image too large!')
+    try:
+        animated = image.is_animated
+    except AttributeError:
+        animated = False
+    if not animated:
+        raise UserWarning('The image is not animated!')
+    frames = []
+    for frame_num in range(image.n_frames):
+        image.seek(frame_num)
+        canvas = Image.new('RGBA', image.size)
+        canvas.paste(image, (0, 0))
+        canvas = canvas.convert(mode='P', palette=Image.ADAPTIVE)
+        frames.append(canvas)
+    fp = path.join(path.curdir, 'data', 'tmp', 'tmp_reversed.gif')
+    frames.reverse()
+    frames[0].save(fp, append_images=frames[1:], save_all=True, loop=0, duration=image.info.get('duration'))
+    return fp
+
+
 def make_gif(image_url: str):
     if image_url.startswith('https://tenor.com/view/'):
         image_url = get_tenor_true_url(image_url)
