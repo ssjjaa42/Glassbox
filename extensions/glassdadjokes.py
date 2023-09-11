@@ -24,7 +24,7 @@ class GlassFather(commands.Cog):
         # Be dad
         if triggers_dad(message.content):
             try:
-                name = parse_name(message.content)
+                name = parse_name(message.clean_content)
                 my_name = message.guild.me.nick if message.guild.me.nick else self.bot.user.name
                 await message.channel.send(f'Hi {name}, I\'m {my_name}!')
             except ValueError:
