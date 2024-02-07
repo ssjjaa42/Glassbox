@@ -37,9 +37,16 @@ class GlassPictures(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(aliases=['rdj'])
     async def downey(self, ctx: commands.Context, *, text=''):
-        """Robert Downey, Jr. Explaining meme generator."""
+        """Robert Downey, Jr. Explaining meme generator.
+        Usage: $downey {text}
+
+        Parameters
+        ----------
+        text : str
+            The text to make RDJ say in his explanation.
+        """
         try:
             await ctx.message.delete()
             await ctx.typing()
@@ -50,11 +57,21 @@ class GlassPictures(commands.Cog):
 
     @commands.command()
     async def inspirational(self, ctx: commands.Context, *, text=''):
-        """Inspirational meme generator.
+        """Inspirational meme generator.\n
+        Usage: $inspirational [URL] {top text}|[bottom text]
 
-        Can take image inputs from an attachment or a direct URL at the start of the command invocation.
-        A pipe character ('|') divides the top row of text from the bottom row.
-        The bottom row of text (and the pipe character) is optional.
+        This command can take image inputs from\n
+          - an attachment to the message that calls this command\n
+          - a URL, placed before the text\n
+          - the attachment of a message the message that calls this command is in reply to\n
+        A pipe character ('|') divides the top row of text from the bottom row.\n
+        The bottom row of text (and by extension the pipe character) is optional.\n
+
+        Parameters
+        ----------
+        text : str
+            The top text, optionally prefixed with an image URL or followed by a pipe character ('|') and the bottom
+            text.
         """
         try:
             image_url, text = await _get_image(ctx, text)
@@ -76,10 +93,19 @@ class GlassPictures(commands.Cog):
 
     @commands.command()
     async def caption(self, ctx: commands.Context, *, text=''):
-        """Image and gif caption maker.
+        """Image caption maker.\n
+        Usage: $caption [URL] {text}
 
-        Can take image inputs from an attachment or a direct URL at the start of the command invocation.
-        Tenor GIFs are also OK.
+        This command can take image inputs from\n
+          - an attachment to the message that calls this command\n
+          - a URL, placed before the caption\n
+          - the attachment of a message the message that calls this command is in reply to
+
+        Parameters
+        ----------
+        text : str
+            The text of the caption, optionally prefixed with the URL of the image to caption if that's how the image
+            is provided.
         """
         try:
             image_url, text = await _get_image(ctx, text)
@@ -96,6 +122,19 @@ class GlassPictures(commands.Cog):
 
     @commands.command()
     async def reverse(self, ctx: commands.Context, *, text=''):
+        """Reverses a GIF.\n
+        Usage: $reverse [URL]
+
+        This command can take image inputs from\n
+          - an attachment to the message that calls this command\n
+          - a URL\n
+          - the attachment of a message the message that calls this command is in reply to
+
+        Parameters
+        ----------
+        text : str
+            Optionally, the URL of the GIF to reverse.
+        """
         try:
             image_url, text = await _get_image(ctx, text)
         except LookupError as exception:
@@ -111,6 +150,20 @@ class GlassPictures(commands.Cog):
 
     @commands.command()
     async def makegif(self, ctx: commands.Context, text=''):
+        """Makes a static image a GIF.\n
+        Probably useful for PC users who want to save a reaction image to their Favorite GIFs collection.\n
+        Usage: $makegif [URL]
+
+        This command can take image inputs from\n
+          - an attachment to the message that calls this command\n
+          - a URL\n
+          - the attachment of a message the message that calls this command is in reply to
+
+        Parameters:
+        -----------
+        text : str
+            Optionally, the URL of the image to make a GIF.
+        """
         try:
             image_url, text = await _get_image(ctx, text)
         except LookupError as exception:

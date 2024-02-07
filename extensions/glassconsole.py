@@ -26,7 +26,14 @@ class GlassConsole(commands.Cog):
 
     @commands.command()
     async def mkdir(self, ctx, *, name):
-        """Try to make a new directory."""
+        """Try to make a new directory in this location.\n
+        Usage: $mkdir {name}
+
+        Parameters:
+        -----------
+        name : str
+            The name of the folder to create.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -39,7 +46,14 @@ class GlassConsole(commands.Cog):
 
     @commands.command()
     async def rmdir(self, ctx, *, path):
-        """Try to delete a directory."""
+        """Try to delete a directory.\n
+        Usage: $rmdir {path}
+
+        Parameters:
+        -----------
+        path : str
+            The folder to delete.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -52,7 +66,14 @@ class GlassConsole(commands.Cog):
     
     @commands.command()
     async def rm(self, ctx, *, path):
-        """Try to delete a file."""
+        """Try to delete a file.\n
+        Usage: $rm {path}
+
+        Parameters:
+        -----------
+        path : str
+            The file to delete.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -70,7 +91,16 @@ class GlassConsole(commands.Cog):
     
     @commands.command()
     async def wget(self, ctx: discord.ext.commands.Context, url='', path=''):
-        """Attempt to store a URL in the working directory."""
+        """Download a file from a URL.\n
+        Usage: $wget {URL} {path}
+
+        Parameters:
+        -----------
+        url : str
+            The URL of the file to download.
+        path : str
+            The path or name to save the file under.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -90,7 +120,16 @@ class GlassConsole(commands.Cog):
 
     @commands.command()
     async def mv(self, ctx, source='', target=''):
-        """Move or rename a file."""
+        """Move or rename a file.\n
+        Usage: $mv {source} {target}
+
+        Parameters:
+        -----------
+        source : str
+            The name or location of the file to move.
+        target : str
+            The new name or location to move the file to.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -102,21 +141,40 @@ class GlassConsole(commands.Cog):
             await ctx.send(str(exception))
 
     @commands.command()
-    async def cd(self, ctx, *, arg=''):
-        """Change the directory, and output the new working path."""
+    async def cd(self, ctx, *, path=''):
+        """Change the current directory, and output the new working path.\n
+        Usage: $cd [path]
+
+        If no path is given, it will reset the working path to the home directory (~).
+
+        Parameters:
+        -----------
+        path : str
+            Optionally, the folder to move to.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
 
         try:
-            self._consoles[ctx.guild.id].cd(arg)
+            self._consoles[ctx.guild.id].cd(path)
             await ctx.send('```'+str(self._consoles[ctx.guild.id])+'```')
         except NotADirectoryError as exception:
             await ctx.send(exception)
 
     @commands.command()
     async def ls(self, ctx, *, path=''):
-        """List the contents of the working directory, or folder at path if given."""
+        """List the contents of a directory.\n
+        Usage: $ls [path]
+
+        In practice, no path will be given, in which case the contents of the current directory will be displayed,
+        but if a path is provided, the contents of that folder will be displayed instead.
+
+        Parameters:
+        -----------
+        path : str
+            Optionally, the folder to display the contents of.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -135,7 +193,9 @@ class GlassConsole(commands.Cog):
 
     @commands.command()
     async def pwd(self, ctx):
-        """Outputs the current working directory."""
+        """Displays the path of the current working directory.\n
+        Usage: $pwd
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
@@ -144,7 +204,14 @@ class GlassConsole(commands.Cog):
 
     @commands.command()
     async def upload(self, ctx: discord.ext.commands.Context, path=''):
-        """Upload a file from the system."""
+        """Upload a file from the system to Discord.\n
+        Usage: $upload {path}
+
+        Parameters:
+        -----------
+        path : str
+            The file to upload.
+        """
         # Obligatory check to see if the console is initialized yet
         if ctx.guild.id not in self._consoles:
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)

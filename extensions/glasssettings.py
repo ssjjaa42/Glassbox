@@ -16,7 +16,8 @@ class GlassSettings(commands.Cog):
 
     @commands.command()
     async def allow(self, ctx: commands.Context):
-        """Allow the bot to do things in the channel this command was invoked from."""
+        """Allow the bot to do random things in the channel this command was invoked from.
+        Usage: $allow"""
         if not ctx.message.author.guild_permissions.manage_channels \
                 and not ctx.message.author.guild_permissions.administrator:
             await ctx.send('You need to have the Manage Channels permission to change this setting.')
@@ -29,7 +30,9 @@ class GlassSettings(commands.Cog):
     
     @commands.command()
     async def deny(self, ctx: commands.Context):
-        """Ban the bot from doing things in the channel this command was invoked from."""
+        """Ban the bot from doing random things in the channel this command was invoked from.
+        Commands (starting with $) will always work regardless of this setting.
+        Usage: $deny"""
         if not ctx.message.author.guild_permissions.manage_channels \
                 and not ctx.message.author.guild_permissions.administrator:
             await ctx.send('You need to have the Manage Channels permission to change this setting.')
@@ -42,7 +45,8 @@ class GlassSettings(commands.Cog):
     
     @commands.command()
     async def log(self, ctx: commands.Context):
-        """Tell the bot to record edited messages and deleted messages in the channel this command was invoked from."""
+        """Tell the bot to record edited messages and deleted messages in the channel this command was invoked from.
+        Usage: $log"""
         if not ctx.message.author.guild_permissions.administrator \
                 and not ctx.message.author.guild_permissions.manage_server:
             await ctx.send('You need to have the Manage Server permission to change this setting.')
@@ -55,7 +59,9 @@ class GlassSettings(commands.Cog):
 
     @commands.command()
     async def unlog(self, ctx: commands.Context):
-        """Tell the bot to stop recording edits and deletions for this server."""
+        """Tell the bot to stop recording edits and deletions for this server.
+        This command need not be issued in the channel currently logging edits and deletions.
+        Usage: $unlog"""
         if not ctx.message.author.guild_permissions.administrator \
                 and not ctx.message.author.guild_permissions.manage_server:
             await ctx.send('You need to have the Manage Server permission to change this setting.')

@@ -55,6 +55,9 @@ class GlassPlonk(commands.Cog):
 
     @plonk.command(name='manual')
     async def adjust(self, ctx: commands.Context):
+        """Increase your swear jar quantity by some amount.
+        Usage: $plonk manual
+        """
         if swear_jars.get_channel(ctx.author.id) is None:
             return
         swear_jars.update(ctx.author.id)
@@ -65,6 +68,9 @@ class GlassPlonk(commands.Cog):
     
     @plonk.command(name='on')
     async def enable(self, ctx: commands.Context):
+        """Enables your swear jar.
+        Usage: $plonk on
+        """
         if swear_jars.get_channel(ctx.author.id) == ctx.channel.id:
             await ctx.send('Already logging your swears to this channel.')
         else:
@@ -73,6 +79,9 @@ class GlassPlonk(commands.Cog):
     
     @plonk.command(name='off')
     async def disable(self, ctx: commands.Context):
+        """Disables your swear jar.
+        Usage: $plonk off
+        """
         if swear_jars.get_channel(ctx.author.id) is None:
             await ctx.send('Your swears are not logged.')
         else:
@@ -84,6 +93,14 @@ class GlassPlonk(commands.Cog):
 
     @plonk.command(name='reset')
     async def reset(self, ctx: commands.Context, quantity=0.0):
+        """Resets your swear jar to a certain amount.
+        Usage: $plonk reset [amount]
+
+        Parameters
+        ----------
+        quantity : float, optional
+            Optionally, the amount to set your jar to. Do not include the $.
+        """
         if swear_jars.get_channel(ctx.author.id) is None:
             await ctx.send('Your swears are not logged.')
         else:
