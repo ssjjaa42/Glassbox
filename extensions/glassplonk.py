@@ -47,7 +47,7 @@ class GlassPlonk(commands.Cog):
         if message.channel.id != swear_jars.get_channel(message.author.id):
             await message.reply(response)
         await self.bot.get_channel(swear_jars.get_channel(message.author.id)).send(
-            f'{response}\n{message.author.mention} now owes ${swear_jars.get_quantity(message.author.id):.2f}!')
+            f'{response}\n{message.author.display_name} now owes ${swear_jars.get_quantity(message.author.id):.2f}!')
         
     @commands.group()
     async def plonk(self, ctx: commands.Context):
@@ -64,7 +64,7 @@ class GlassPlonk(commands.Cog):
         if ctx.channel.id != swear_jars.get_channel(ctx.author.id):
             await ctx.reply('Plonk!')
         await self.bot.get_channel(swear_jars.get_channel(ctx.author.id)).send(
-            f'Plonk!\n{ctx.author.mention} now owes ${swear_jars.get_quantity(ctx.author.id):.2f}!')
+            f'Plonk!\n{ctx.author.display_name} now owes ${swear_jars.get_quantity(ctx.author.id):.2f}!')
     
     @plonk.command(name='on')
     async def enable(self, ctx: commands.Context):
