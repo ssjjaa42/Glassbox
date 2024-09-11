@@ -15,7 +15,7 @@ class GlassConsole(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._consoles = {}
-    
+
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         """Sets up the data folder when joining a new server."""
@@ -40,7 +40,7 @@ class GlassConsole(commands.Cog):
 
         try:
             self._consoles[ctx.guild.id].mkdir(name, ctx.author.id)
-            await ctx.send(f'Folder created.')
+            await ctx.send('Folder created.')
         except PermissionError as exception:
             await ctx.send(exception)
 
@@ -60,10 +60,10 @@ class GlassConsole(commands.Cog):
 
         try:
             self._consoles[ctx.guild.id].rmdir(path, ctx.author.id)
-            await ctx.send(f'Folder deleted.')
+            await ctx.send('Folder deleted.')
         except (NotADirectoryError, PermissionError) as exception:
             await ctx.send(exception)
-    
+
     @commands.command()
     async def rm(self, ctx, *, path):
         """Try to delete a file.\n
@@ -79,16 +79,16 @@ class GlassConsole(commands.Cog):
             self._consoles[ctx.guild.id] = Console(ctx.guild.id)
         try:
             self._consoles[ctx.guild.id].rm(path, ctx.author.id)
-            await ctx.send(f'File deleted.')
+            await ctx.send('File deleted.')
         except IsADirectoryError:
             try:
                 self._consoles[ctx.guild.id].rmdir(path, ctx.author.id)
-                await ctx.send(f'Folder deleted.')
+                await ctx.send('Folder deleted.')
             except (NotADirectoryError, PermissionError) as exception:
                 await ctx.send(exception)
         except (FileNotFoundError, NotADirectoryError, PermissionError) as exception:
             await ctx.send(exception)
-    
+
     @commands.command()
     async def wget(self, ctx: discord.ext.commands.Context, url='', path=''):
         """Download a file from a URL.\n
@@ -237,4 +237,3 @@ async def setup(bot):
 async def teardown(bot):
     await bot.remove_cog('GlassConsole')
     logger.info('Unloaded console commands.')
-    

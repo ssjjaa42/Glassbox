@@ -94,7 +94,7 @@ def inspirational_meme(image_url, header='', body=''):
             wrapped = wrap_text(header.upper(), fnt_head, int(0.9*x), int(0.11*y))
             if '\n' in wrapped:
                 fnt_head = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), fnt_head.size - 1)
-            else: 
+            else:
                 size_bad = False
         except UserWarning:
             fnt_head = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), fnt_head.size - 1)
@@ -104,7 +104,7 @@ def inspirational_meme(image_url, header='', body=''):
             wrapped = wrap_text(body.upper(), fnt_body, int(0.9*x), int(0.07*y))
             if '\n' in wrapped:
                 fnt_body = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), fnt_body.size - 1)
-            else: 
+            else:
                 size_bad = False
         except UserWarning:
             fnt_body = ImageFont.truetype(path.join('data', 'fonts', 'times.ttf'), fnt_body.size - 1)

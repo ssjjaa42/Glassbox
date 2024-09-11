@@ -27,7 +27,7 @@ class GlassSettings(commands.Cog):
             await ctx.send('This channel is now off the blacklist.')
         except IndexError as exception:
             await ctx.send(str(exception))
-    
+
     @commands.command()
     async def deny(self, ctx: commands.Context):
         """Ban the bot from doing random things in the channel this command was invoked from.
@@ -42,7 +42,7 @@ class GlassSettings(commands.Cog):
             await ctx.send('This channel is now on the blacklist.')
         except IndexError as exception:
             await ctx.send(str(exception))
-    
+
     @commands.command()
     async def log(self, ctx: commands.Context):
         """Tell the bot to record edited messages and deleted messages in the channel this command was invoked from.
@@ -89,7 +89,7 @@ class GlassSettings(commands.Cog):
         embed.set_footer(text=f'{after.author.name}#{after.author.discriminator} • '
                               f'{after.edited_at.strftime("%m/%d/%Y %I:%M %p")}', icon_url=after.author.avatar.url)
         await self.bot.get_channel(logging()[str(after.guild.id)]).send(embed=embed)
-    
+
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         if not str(message.guild.id) in logging():
