@@ -48,7 +48,7 @@ class GlassPlonk(commands.Cog):
             await message.reply(response)
         await self.bot.get_channel(swear_jars.get_channel(message.author.id)).send(
             f'{response}\n{message.author.display_name} now owes ${swear_jars.get_quantity(message.author.id):.2f}!')
-        
+
     @commands.group()
     async def plonk(self, ctx: commands.Context):
         swear_jars.check(ctx.author.id)
@@ -65,7 +65,7 @@ class GlassPlonk(commands.Cog):
             await ctx.reply('Plonk!')
         await self.bot.get_channel(swear_jars.get_channel(ctx.author.id)).send(
             f'Plonk!\n{ctx.author.display_name} now owes ${swear_jars.get_quantity(ctx.author.id):.2f}!')
-    
+
     @plonk.command(name='on')
     async def enable(self, ctx: commands.Context):
         """Enables your swear jar.
@@ -76,7 +76,7 @@ class GlassPlonk(commands.Cog):
         else:
             swear_jars.set_channel(ctx.author.id, ctx.channel.id)
             await ctx.send('Now logging your swears to this channel.')
-    
+
     @plonk.command(name='off')
     async def disable(self, ctx: commands.Context):
         """Disables your swear jar.
