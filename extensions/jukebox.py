@@ -66,7 +66,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data = await loop.run_in_executor(None, to_run)
         except Exception:
             raise ValueError('Song not found.')
-        return cls(discord.FFmpegPCMAudio(data['url']), data=data, requester=requester)
+        before_options = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
+        return cls(discord.FFmpegPCMAudio(data['url'], before_options=before_options), data=data, requester=requester)
 
 
 class MusicPlayer:
@@ -218,8 +219,7 @@ class Jukebox(commands.Cog):
                     await player.queue.put(source)
             except yt_dlp.utils.DownloadError:
                 await ctx.send('An error occurred in processing your song: If this is a Spotify link, Vitreum knows '
-                               'about this error, and he\'ll get to fixing that eventually.',
-                               delete_after=10)
+                               'about this error, and he\'ll get to fixing that eventually.')
 
     @commands.command(name='playnext')
     async def playnext_(self, ctx: commands.Context, * song: str):
@@ -426,7 +426,7 @@ class Jukebox(commands.Cog):
 
     @play_.before_invoke
     @playnext_.before_invoke
-    async def ensure_voice(self, ctx: commands.Context):
+    async def ensure_voice(self, ctx: commands.Context = None):
         if not ctx.voice_client:
             await ctx.invoke(self.join_)
 
