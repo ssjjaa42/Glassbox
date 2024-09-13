@@ -36,12 +36,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
         await search_msg.delete()
         if 'entries' in data:
             if playlist:
+                logger.debug('Saving playlist!')
                 data = data
                 await ctx.send(f'Queued **{data["title"]} ({len(data["entries"])} tracks)**')
                 return [{'webpage_url': datum['webpage_url'],
                          'requester': ctx.author,
                          'title': datum['title']} for datum in data['entries']]
             else:
+                logger.debug('Saving video from search results!')
                 try:
                     data = data['entries'][0]
                 except IndexError:
@@ -51,6 +53,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                         'requester': ctx.author,
                         'title': data['title']}
         elif 'webpage_url' in data:
+            logger.debug('Saving video directly!')
             await ctx.send(f'Queued **{data["title"]}**')
             return {'webpage_url': data['webpage_url'],
                     'requester': ctx.author,
@@ -212,10 +215,19 @@ class Jukebox(commands.Cog):
                     # We have a playlist
                     sources = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=True)
                     for source in sources:
+                        if source is None:
+                            await ctx.send('An error has occurred!\n'
+                                           f'Your lucky day..! This is Mystery Error 1 <@{self.bot.owner_id}> is trying to pin down.\n'
+                                           'Your song has not been added to the queue. It\'s likely it couldn\'t be found.')
+                            continue
                         await player.queue.put(source)
                 else:
                     # Individual video
                     source = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=False)
+                    if source is None:
+                        return await ctx.send('An error has occurred!\n'
+                                              f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> is trying to pin down.\n'
+                                              'Your song has not been added to the queue. It\'s likely it couldn\'t be found.')
                     await player.queue.put(source)
             except yt_dlp.utils.DownloadError:
                 await ctx.send('An error occurred in processing your song: If this is a Spotify link, Vitreum knows '
