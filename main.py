@@ -251,35 +251,38 @@ async def on_message(message):
     #     trouble.reset()
 
     global rand
-    # ash moment
-    if message.author.id == 412713124077109249:
-        if 'florida' in message.content.lower() or 'floridian' in message.content.lower():
-            await message.add_reaction('🐊')
-        elif rand.random() < 0.0625:  # 1 in 16 chance
-            await message.add_reaction('<:frogpog:1005330533544370238>')
-    # magment
-    if message.author.id == 895809582058831882:
-        if rand.random() < 0.0625:  # 1 in 16 chance
-            await message.add_reaction('<:cat_eyebrowraise:1037610737947906079>')
-    # steve moment
-    if message.author.id == 913183576281997332:
-        if rand.random() < 0.0625:  # 1 in 16 chance
-            if rand.random() < 0.5:
-                await message.add_reaction('<:huh:1005333474430963753>')
-            else:
-                await message.add_reaction('<:whatthefuck:1040419073391071353>')
-    # kink moment
-    if message.author.id == 720442589584556034:
-        if rand.random() < 0.125:  # 1 in 8 chance
-            await message.add_reaction('<:bonus_chromosome:1011729141151830047>')
-    # fork moment
-    if message.author.id == 738020641269219329:
-        if rand.random() < 0.0625:  # 1 in 16 chance
-            await message.add_reaction('<:redditor:741101661170302987>')
-    # scott.png
-    if message.author.id == 306196186803601409:
-        if rand.random() < 0.0625:  # 1 in 16 chance
-            await message.add_reaction('<:highsoldier:1066767768042610768>')
+    try:
+        # ash moment
+        if message.author.id == 412713124077109249:
+            if 'florida' in message.content.lower() or 'floridian' in message.content.lower():
+                await message.add_reaction('🐊')
+            elif rand.random() < 0.0625:  # 1 in 16 chance
+                await message.add_reaction('<:frogpog:1005330533544370238>')
+        # magment
+        if message.author.id == 895809582058831882:
+            if rand.random() < 0.0625:  # 1 in 16 chance
+                await message.add_reaction('<:cat_eyebrowraise:1037610737947906079>')
+        # steve moment
+        if message.author.id == 913183576281997332:
+            if rand.random() < 0.0625:  # 1 in 16 chance
+                if rand.random() < 0.5:
+                    await message.add_reaction('<:huh:1005333474430963753>')
+                else:
+                    await message.add_reaction('<:whatthefuck:1040419073391071353>')
+        # kink moment
+        if message.author.id == 720442589584556034:
+            if rand.random() < 0.125:  # 1 in 8 chance
+                await message.add_reaction('<:bonus_chromosome:1011729141151830047>')
+        # fork moment
+        if message.author.id == 738020641269219329:
+            if rand.random() < 0.0625:  # 1 in 16 chance
+                await message.add_reaction('<:redditor:741101661170302987>')
+        # scott.png
+        if message.author.id == 306196186803601409:
+            if rand.random() < 0.0625:  # 1 in 16 chance
+                await message.add_reaction('<:highsoldier:1066767768042610768>')
+    except discord.errors.HTTPException:
+        logger.warning('Tried to react with unknown emoji! Am I in the server that has it?')
 
     # Mandatory line to make commands work
     await glass.process_commands(message)
