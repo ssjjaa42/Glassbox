@@ -1,5 +1,6 @@
 # Look at me. I'm the hero now
 # Large swaths of code borrowed from https://gist.github.com/EvieePy/ab667b74e9758433b3eb806c53a19f34
+
 import logging
 import asyncio
 from async_timeout import timeout
@@ -11,7 +12,7 @@ from functools import partial
 import yt_dlp
 
 logger = logging.getLogger("glassbox")
-
+embed_color = 0x0033aa
 ytdl = yt_dlp.YoutubeDL({'format': 'bestaudio', 'noplaylist': False, 'quiet': True})
 
 
@@ -22,13 +23,15 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         self.title = data['title']
         self.webpage_url = data['webpage_url']
+        self.thumbnail = data['thumbnail']
+        self.duration = data['duration']
 
     def __getitem__(self, item: str):
         return self.__getattribute__(item)
 
     @classmethod
     async def create_source(cls, ctx: commands.Context, search: str, *, loop, playlist=False):
-        search_msg = await ctx.send('Searching...', delete_after=10)
+        search_msg = await ctx.send('Searching...')
 
         loop = loop or asyncio.get_event_loop()
         to_run = partial(ytdl.extract_info, url=search, download=False)
@@ -37,27 +40,47 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if 'entries' in data:
             if playlist:
                 logger.debug('Saving playlist!')
-                data = data
-                await ctx.send(f'Queued **{data["title"]} ({len(data["entries"])} tracks)**')
+                embed = discord.Embed(title='Playlist queued',
+                                      description=f'**[{data["title"]}]({data["webpage_url"]})**\n'
+                                      f'**{len(data["entries"])} tracks**',
+                                      color=embed_color)
+                embed.set_thumbnail(url=data['thumbnails'][0]['url'])
+                await ctx.send(embed=embed)
                 return [{'webpage_url': datum['webpage_url'],
                          'requester': ctx.author,
-                         'title': datum['title']} for datum in data['entries']]
+                         'title': datum['title'],
+                         'thumbnail': datum['thumbnail'],
+                         'duration': datum['duration']} for datum in data['entries']]
             else:
                 logger.debug('Saving video from search results!')
                 try:
                     data = data['entries'][0]
                 except IndexError:
                     return
-                await ctx.send(f'Queued **{data["title"]}**')
+                embed = discord.Embed(title='Song queued',
+                                      description=f'**[{data["title"]}]({data["webpage_url"]})**\n'
+                                      f'Length: **{data["duration"]//60}:{(data["duration"]%60):02d}**',
+                                      color=embed_color)
+                embed.set_thumbnail(url=data['thumbnail'])
+                await ctx.send(embed=embed)
                 return {'webpage_url': data['webpage_url'],
                         'requester': ctx.author,
-                        'title': data['title']}
+                        'title': data['title'],
+                        'thumbnail': data['thumbnail'],
+                        'duration': data['duration']}
         elif 'webpage_url' in data:
             logger.debug('Saving video directly!')
-            await ctx.send(f'Queued **{data["title"]}**')
+            embed = discord.Embed(title='Song queued',
+                                  description=f'**[{data["title"]}]({data["webpage_url"]})**\n'
+                                  f'Length: **{data["duration"]//60}:{(data["duration"]%60):02d}**',
+                                  color=embed_color)
+            embed.set_thumbnail(url=data['thumbnail'])
+            await ctx.send(embed=embed)
             return {'webpage_url': data['webpage_url'],
                     'requester': ctx.author,
-                    'title': data['title']}
+                    'title': data['title'],
+                    'thumbnail': data['thumbnail'],
+                    'duration': data['duration']}
 
     @classmethod
     async def regather_stream(cls, data, *, loop):
@@ -116,10 +139,12 @@ class MusicPlayer:
                 self.__guild.voice_client.play(source,
                                                after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
                 embed = discord.Embed(title='Now playing',
-                                      description=f'**{source.title}**\n'
+                                      description=f'**[{source.title}]({source.webpage_url})**\n'
                                       f'requested by {source.requester}\n'
-                                      f'{"This song is looping." if self.looping else ""}',
-                                      color=0xaa0000)
+                                      f'Length: **{source.duration//60}:{(source.duration%60):02d}**\n'
+                                      f'{"**This song is looping.**" if self.looping else ""}',
+                                      color=embed_color)
+                embed.set_thumbnail(url=source.thumbnail)
                 self.np = await self.__channel.send(embed=embed)
                 await self.next.wait()
 
@@ -211,23 +236,29 @@ class Jukebox(commands.Cog):
         async with ctx.typing():
             player = self.get_player(ctx)
             try:
-                if url.startswith('https://www.youtube.com/playlist') or '?list=' in url:
+                if url.startswith('https://www.youtube.com/playlist'):
                     # We have a playlist
+                    await ctx.send('This is a playlist! Please be patient with this search, '
+                                   'you can expect it to take longer than usual.', delete_after=15)
                     sources = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=True)
                     for source in sources:
                         if source is None:
                             await ctx.send('An error has occurred!\n'
-                                           f'Your lucky day..! This is Mystery Error 1 <@{self.bot.owner_id}> is trying to pin down.\n'
-                                           'Your song has not been added to the queue. It\'s likely it couldn\'t be found.')
+                                           f'Your lucky day..! This is Mystery Error 1 <@{self.bot.owner_id}> is '
+                                           'trying to pin down.\nYour song has not been added to the queue. '
+                                           'It\'s likely it couldn\'t be found.')
                             continue
                         await player.queue.put(source)
                 else:
                     # Individual video
+                    if '&list=' in url:
+                        url = url[:url.find('&list=')]
                     source = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=False)
                     if source is None:
                         return await ctx.send('An error has occurred!\n'
-                                              f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> is trying to pin down.\n'
-                                              'Your song has not been added to the queue. It\'s likely it couldn\'t be found.')
+                                              f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> '
+                                              'is trying to pin down.\nYour song has not been added to the queue. '
+                                              'It\'s likely it couldn\'t be found.')
                     await player.queue.put(source)
             except yt_dlp.utils.DownloadError:
                 await ctx.send('An error occurred in processing your song: If this is a Spotify link, Vitreum knows '
@@ -249,14 +280,29 @@ class Jukebox(commands.Cog):
             player = self.get_player(ctx)
             q_size = player.queue.qsize()
             try:
-                if url.startswith('https://www.youtube.com/playlist') or '?list=' in url:
+                if url.startswith('https://www.youtube.com/playlist'):
                     # We have a playlist
+                    await ctx.send('This is a playlist! Please be patient with this search, '
+                                   'you can expect it to take longer than usual.', delete_after=15)
                     sources = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=True)
                     for source in sources:
+                        if source is None:
+                            await ctx.send('An error has occurred!\n'
+                                           f'Your lucky day..! This is Mystery Error 1 <@{self.bot.owner_id}> is '
+                                           'trying to pin down.\nYour song has not been added to the queue. '
+                                           'It\'s likely it couldn\'t be found.')
+                            continue
                         await player.queue.put(source)
                 else:
                     # Individual video
+                    if '&list=' in url:
+                        url = url[:url.find('&list=')]
                     source = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=False)
+                    if source is None:
+                        return await ctx.send('An error has occurred!\n'
+                                              f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> '
+                                              'is trying to pin down.\nYour song has not been added to the queue. '
+                                              'It\'s likely it couldn\'t be found.')
                     await player.queue.put(source)
             except yt_dlp.utils.DownloadError:
                 await ctx.send('An error occurred. If this is a Spotify link, Vitreum knows '
@@ -358,7 +404,7 @@ class Jukebox(commands.Cog):
             await ctx.send('Looping enabled.')
 
     @commands.command(name='volume')
-    async def volume_(self, ctx: commands.Context, volume: int):
+    async def volume_(self, ctx: commands.Context, volume: float):
         """Change the audio volume.
         Usage: $volume <volume>
         """
@@ -366,6 +412,7 @@ class Jukebox(commands.Cog):
         if not ctx.voice_client or not ctx.voice_client.is_connected():
             return await ctx.send('Not connected to a voice channel.', delete_after=10)
 
+        volume = int(volume)
         if not 0 <= volume <= 100:
             return await ctx.send('Please enter a REASONABLE volume level.', delete_after=10)
 
@@ -389,12 +436,12 @@ class Jukebox(commands.Cog):
             return await ctx.send('The queue is empty.')
 
         upcoming = list(itertools.islice(player.queue._queue, 0, 8))
-        fmt = '\n'.join([f'**{i+1}. `{_["title"]}`**' for i, _ in enumerate(upcoming)])
+        fmt = '\n'.join([f'**{i+1}. [{_["title"]}]({_["webpage_url"]})**' for i, _ in enumerate(upcoming)])
         if player.looping:
             fmt = '**The current song is looped!**\n' + fmt
         embed = discord.Embed(title=f'Next {len(upcoming)} in queue:',
                               description=fmt,
-                              color=0xaa0000)
+                              color=embed_color)
         await ctx.send(embed=embed)
 
     @commands.command(name='clear')
@@ -429,11 +476,14 @@ class Jukebox(commands.Cog):
         except discord.HTTPException:
             pass
 
+        source = player.current
         embed = discord.Embed(title='Now playing',
-                              description=f'**{ctx.voice_client.source.title}**\n'
-                              f'requested by {ctx.voice_client.source.requester}\n'
-                              f'{"This song is looping." if player.looping else ""}',
-                              color=0xaa0000)
+                              description=f'**[{source.title}]({source.webpage_url})**\n'
+                              f'requested by {source.requester}\n'
+                              f'Length: **{source.duration//60}:{(source.duration%60):02d}**\n'
+                              f'{"**This song is looping.**" if player.looping else ""}',
+                              color=embed_color)
+        embed.set_thumbnail(url=source.thumbnail)
         player.np = await ctx.send(embed=embed)
 
     @play_.before_invoke
