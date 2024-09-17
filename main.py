@@ -45,34 +45,7 @@ if not os.path.exists(extensions_config_path):
 
 rand = random.Random()
 # s_trouble = script.Script(os.path.join(os.path.curdir, 'data', 'scripts', 'trouble.txt'))
-last_channel = None
-last_server = None
 last_edit = {}
-
-
-def sanitize_text(text: str):
-    """Take a raw string and replace unwanted characters with spaces.
-
-    Unwanted characters are defined in this function.
-    """
-    for c in '`\n':
-        text = text.replace(c, ' ')
-    text = text.strip()
-    return text
-
-
-async def log_message(message: discord.Message):
-    """Prints a message to the log, sanitizing it first. Also prints the author, current server and channel."""
-    global last_channel
-    if message.channel != last_channel:
-        logger.debug(f'{message.guild.name} / #{message.channel.name}')
-        last_channel = message.channel
-    logger.debug(f'    {message.author.display_name} ({message.author.name}#{message.author.discriminator}): '
-                 f'{sanitize_text(message.clean_content)}')
-    if len(message.attachments) > 0:
-        logger.debug('     |  Files attached:')
-        for attachment in message.attachments:
-            logger.debug(f'     |      {attachment.filename} ({attachment.url})')
 
 
 @glass.event
@@ -185,14 +158,12 @@ async def on_message_delete(msg: discord.Message):
 
 
 @glass.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     """Message handler. Does things, and then runs it through the command system.
 
     To be clear, things in this message run BEFORE any command runs.
     This method catches bot messages and does not do anything with them besides print them.
     """
-    # Log message
-    await log_message(message)
     # Do nothing if the message is from us or another bot
     if message.author.bot:
         return
