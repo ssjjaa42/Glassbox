@@ -7,4 +7,6 @@ extensions.json
 latest.log
 token.txt
 tenor_api_token.txt
+spotify_api_token.txt
+.cache
 *__pycache__*

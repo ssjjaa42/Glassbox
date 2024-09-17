@@ -10,10 +10,26 @@ from discord.ext import commands
 # from discord import app_commands
 from functools import partial
 import yt_dlp
+from spotipy.client import Spotify
+from spotipy.oauth2 import SpotifyClientCredentials
+import os
 
 logger = logging.getLogger("glassbox")
 embed_color = 0x0033aa
 ytdl = yt_dlp.YoutubeDL({'format': 'bestaudio', 'noplaylist': False, 'quiet': True})
+
+if not os.path.exists('spotify_api_token.txt'):
+    with open('spotify_api_token.txt', 'x') as f:
+        f.close()
+with open('spotify_api_token.txt', 'r') as f:
+    api_tokens = f.read()
+    if api_tokens == '':
+        logger.error("No Spotify API token! This module will not work properly. "
+                     "Please put a developer token and secret in spotify_api_token.txt")
+api_tokens = api_tokens.split()
+client_id = api_tokens[0]
+client_secret = api_tokens[1]
+spotify = Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
@@ -34,6 +50,46 @@ class YTDLSource(discord.PCMVolumeTransformer):
         search_msg = await ctx.send('Searching...')
 
         loop = loop or asyncio.get_event_loop()
+        if search.startswith('https://open.spotify.com/playlist/') \
+           or search.startswith('https://open.spotify.com/album/'):
+            if search.startswith('https://open.spotify.com/playlist/'):
+                # Spotify playlist
+                logger.debug('Saving Spotify playlist!')
+                playlist = spotify.playlist(search)
+            elif search.startswith('https://open.spotify.com/album/'):
+                # Spotify album
+                logger.debug('Saving Spotify album!')
+                playlist = spotify.album(search)
+            sources = []
+            for track in playlist['tracks']['items']:
+                if 'track' in track:
+                    track = track['track']
+                url = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
+                to_run = partial(ytdl.extract_info, url=url, download=False)
+                data = await loop.run_in_executor(None, to_run)
+                try:
+                    data = data['entries'][0]
+                except IndexError:
+                    continue
+                sources.append({'webpage_url': data['webpage_url'],
+                                'requester': ctx.author,
+                                'title': data['title'],
+                                'thumbnail': data['thumbnail'],
+                                'duration': data['duration']})
+            await search_msg.delete()
+            embed = discord.Embed(title='Album queued',
+                                  description=f'**[{playlist["name"]}]({playlist["external_urls"]["spotify"]})**\n'
+                                  f'**{len(sources)} tracks**',
+                                  color=embed_color)
+            embed.set_thumbnail(url=playlist['images'][0]['url'])
+            await ctx.send(embed=embed)
+            return sources
+        elif search.startswith('https://open.spotify.com/track/'):
+            # Individual Spotify track
+            logger.debug('Saving Spotify track!')
+            track = spotify.track(search)
+            search = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
+
         to_run = partial(ytdl.extract_info, url=search, download=False)
         data = await loop.run_in_executor(None, to_run)
         await search_msg.delete()
@@ -236,7 +292,9 @@ class Jukebox(commands.Cog):
         async with ctx.typing():
             player = self.get_player(ctx)
             try:
-                if url.startswith('https://www.youtube.com/playlist'):
+                if url.startswith('https://www.youtube.com/playlist') \
+                     or url.startswith('https://open.spotify.com/playlist/') \
+                     or url.startswith('https://open.spotify.com/album/'):
                     # We have a playlist
                     await ctx.send('This is a playlist! Please be patient with this search, '
                                    'you can expect it to take longer than usual.', delete_after=15)
@@ -280,7 +338,9 @@ class Jukebox(commands.Cog):
             player = self.get_player(ctx)
             q_size = player.queue.qsize()
             try:
-                if url.startswith('https://www.youtube.com/playlist'):
+                if url.startswith('https://www.youtube.com/playlist') \
+                     or url.startswith('https://open.spotify.com/playlist/') \
+                     or url.startswith('https://open.spotify.com/album/'):
                     # We have a playlist
                     await ctx.send('This is a playlist! Please be patient with this search, '
                                    'you can expect it to take longer than usual.', delete_after=15)
