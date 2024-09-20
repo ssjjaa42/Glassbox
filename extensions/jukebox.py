@@ -16,7 +16,10 @@ import os
 
 logger = logging.getLogger("glassbox")
 embed_color = 0x0033aa
-ytdl = yt_dlp.YoutubeDL({'format': 'bestaudio', 'noplaylist': False, 'quiet': True})
+ytdl = yt_dlp.YoutubeDL({'format': 'bestaudio',
+                         'noplaylist': False,
+                         'quiet': True,
+                         'extract_flat': 'in_playlist'})
 
 if not os.path.exists('spotify_api_token.txt'):
     with open('spotify_api_token.txt', 'x') as f:
@@ -30,6 +33,78 @@ api_tokens = api_tokens.split()
 client_id = api_tokens[0]
 client_secret = api_tokens[1]
 spotify = Spotify(client_credentials_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
+
+search_queue = asyncio.Queue()
+search_results = {}
+
+
+async def search_loop(bot: commands.Bot):
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        # wait for next song, 5 minute timeout
+        request = await search_queue.get()
+        query = request.query
+
+        loop = bot.loop
+        if query.startswith('https://open.spotify.com/playlist/') \
+           or query.startswith('https://open.spotify.com/album/'):
+            if query.startswith('https://open.spotify.com/playlist/'):
+                # Spotify playlist
+                logger.debug('Saving Spotify playlist!')
+                playlist = spotify.playlist(query)
+            elif query.startswith('https://open.spotify.com/album/'):
+                # Spotify album
+                logger.debug('Saving Spotify album!')
+                playlist = spotify.album(query)
+
+            combined_tracks = []
+            for track in playlist['tracks']['items']:
+                if 'track' in track:
+                    track = track['track']
+                url = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
+                to_run = partial(ytdl.extract_info, url=url, download=False)
+                data = await loop.run_in_executor(None, to_run)
+                try:
+                    data = data['entries'][0]
+                except IndexError:
+                    continue
+                combined_tracks.append(data)
+
+            search_results[request.key] = data
+            request.flag.set()
+            continue
+
+        elif query.startswith('https://open.spotify.com/track/'):
+            # Individual Spotify track
+            logger.debug('Saving Spotify track!')
+            track = spotify.track(query)
+            query = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
+
+        if query.startswith('ytsearch:'):
+            # ytsearch is weird, use another format
+            query = query[9:]
+            query = f'https://www.youtube.com/results?search_query={"+".join(query.split())}'
+            with yt_dlp.YoutubeDL({'format': 'bestaudio',
+                                   'quiet': True,
+                                   'extract_flat': 'in_playlist',
+                                   'playlist_items': '1:1'}) as ytdl2:
+                to_run = partial(ytdl2.extract_info, url=query, download=False)
+        else:
+            to_run = partial(ytdl.extract_info, url=query, download=False)
+        try:
+            data = await loop.run_in_executor(None, to_run)
+        except Exception:
+            raise ValueError('Song not found.')
+        search_results[request.key] = data
+        request.flag.set()
+        continue
+
+
+class SearchRequest():
+    def __init__(self, query: str, flag: asyncio.Event, key: str):
+        self.query = query
+        self.flag = flag
+        self.key = key
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
@@ -46,37 +121,25 @@ class YTDLSource(discord.PCMVolumeTransformer):
         return self.__getattribute__(item)
 
     @classmethod
-    async def create_source(cls, ctx: commands.Context, search: str, *, loop, playlist=False):
-        search_msg = await ctx.send('Searching...')
+    async def create_source(cls, ctx: commands.Context, search: str, *, playlist=False):
+        search_msg = await ctx.reply('Searching...')
+        results_back = asyncio.Event()
+        key = ctx.__hash__()
+        await search_queue.put(SearchRequest(search, results_back, key))
+        await results_back.wait()
+        data = search_results[key]
+        del search_results[key]
+        await search_msg.delete()
 
-        loop = loop or asyncio.get_event_loop()
         if search.startswith('https://open.spotify.com/playlist/') \
            or search.startswith('https://open.spotify.com/album/'):
-            if search.startswith('https://open.spotify.com/playlist/'):
-                # Spotify playlist
-                logger.debug('Saving Spotify playlist!')
-                playlist = spotify.playlist(search)
-            elif search.startswith('https://open.spotify.com/album/'):
-                # Spotify album
-                logger.debug('Saving Spotify album!')
-                playlist = spotify.album(search)
             sources = []
-            for track in playlist['tracks']['items']:
-                if 'track' in track:
-                    track = track['track']
-                url = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
-                to_run = partial(ytdl.extract_info, url=url, download=False)
-                data = await loop.run_in_executor(None, to_run)
-                try:
-                    data = data['entries'][0]
-                except IndexError:
-                    continue
-                sources.append({'webpage_url': data['webpage_url'],
+            for datum in data:
+                sources.append({'webpage_url': datum['webpage_url'],
                                 'requester': ctx.author,
-                                'title': data['title'],
-                                'thumbnail': data['thumbnail'],
-                                'duration': data['duration']})
-            await search_msg.delete()
+                                'title': datum['title'],
+                                'thumbnail': datum['thumbnail'],
+                                'duration': datum['duration']})
             embed = discord.Embed(title='Album queued',
                                   description=f'**[{playlist["name"]}]({playlist["external_urls"]["spotify"]})**\n'
                                   f'**{len(sources)} tracks**',
@@ -84,15 +147,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
             embed.set_thumbnail(url=playlist['images'][0]['url'])
             await ctx.send(embed=embed)
             return sources
-        elif search.startswith('https://open.spotify.com/track/'):
-            # Individual Spotify track
-            logger.debug('Saving Spotify track!')
-            track = spotify.track(search)
-            search = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
-
-        to_run = partial(ytdl.extract_info, url=search, download=False)
-        data = await loop.run_in_executor(None, to_run)
-        await search_msg.delete()
         if 'entries' in data:
             if playlist:
                 logger.debug('Saving playlist!')
@@ -113,16 +167,17 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     data = data['entries'][0]
                 except IndexError:
                     return
+                data['duration'] = int(data['duration'])
                 embed = discord.Embed(title='Song queued',
-                                      description=f'**[{data["title"]}]({data["webpage_url"]})**\n'
+                                      description=f'**[{data["title"]}]({data["url"]})**\n'
                                       f'Length: **{data["duration"]//60}:{(data["duration"]%60):02d}**',
                                       color=embed_color)
-                embed.set_thumbnail(url=data['thumbnail'])
+                embed.set_thumbnail(url=data['thumbnails'][0]['url'])
                 await ctx.send(embed=embed)
-                return {'webpage_url': data['webpage_url'],
+                return {'webpage_url': data['url'],
                         'requester': ctx.author,
                         'title': data['title'],
-                        'thumbnail': data['thumbnail'],
+                        'thumbnail': data['thumbnails'][0]['url'],
                         'duration': data['duration']}
         elif 'webpage_url' in data:
             logger.debug('Saving video directly!')
@@ -137,17 +192,19 @@ class YTDLSource(discord.PCMVolumeTransformer):
                     'title': data['title'],
                     'thumbnail': data['thumbnail'],
                     'duration': data['duration']}
+        else:
+            logger.error(f'Unknown data: {data}')
 
     @classmethod
-    async def regather_stream(cls, data, *, loop):
-        loop = loop or asyncio.get_event_loop()
-        try:
-            requester = data['requester']
+    async def regather_stream(cls, data):
+        requester = data['requester']
+        results_back = asyncio.Event()
+        key = f'{requester.name}{data["webpage_url"]}'
+        await search_queue.put(SearchRequest(data['webpage_url'], results_back, key))
+        await results_back.wait()
+        data = search_results[key]
+        del search_results[key]
 
-            to_run = partial(ytdl.extract_info, url=data['webpage_url'], download=False)
-            data = await loop.run_in_executor(None, to_run)
-        except Exception:
-            raise ValueError('Song not found.')
         before_options = '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
         return cls(discord.FFmpegPCMAudio(data['url'], before_options=before_options), data=data, requester=requester)
 
@@ -184,7 +241,7 @@ class MusicPlayer:
 
             if not isinstance(source, YTDLSource):
                 try:
-                    source = await YTDLSource.regather_stream(source, loop=self.bot.loop)
+                    source = await YTDLSource.regather_stream(source)
                 except Exception as e:
                     await self.__channel.send(f'An error occured in processing your song: {e}', delete_after=10)
                     continue
@@ -206,7 +263,7 @@ class MusicPlayer:
 
                 if self.looping:
                     self.next.clear()
-                    new_source = await YTDLSource.regather_stream(source, loop=self.bot.loop)
+                    new_source = await YTDLSource.regather_stream(source)
                     # cleanup ffmpeg process
                     source.cleanup()
                     source = new_source
@@ -237,6 +294,7 @@ class Jukebox(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.players = {}
+        bot.loop.create_task(search_loop(bot))
 
     async def cleanup(self, guild: discord.Guild):
         try:
@@ -298,7 +356,7 @@ class Jukebox(commands.Cog):
                     # We have a playlist
                     await ctx.send('This is a playlist! Please be patient with this search, '
                                    'you can expect it to take longer than usual.', delete_after=15)
-                    sources = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=True)
+                    sources = await YTDLSource.create_source(ctx, url, playlist=True)
                     for source in sources:
                         if source is None:
                             await ctx.send('An error has occurred!\n'
@@ -311,7 +369,7 @@ class Jukebox(commands.Cog):
                     # Individual video
                     if '&list=' in url:
                         url = url[:url.find('&list=')]
-                    source = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=False)
+                    source = await YTDLSource.create_source(ctx, url, playlist=False)
                     if source is None:
                         return await ctx.send('An error has occurred!\n'
                                               f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> '
@@ -344,7 +402,7 @@ class Jukebox(commands.Cog):
                     # We have a playlist
                     await ctx.send('This is a playlist! Please be patient with this search, '
                                    'you can expect it to take longer than usual.', delete_after=15)
-                    sources = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=True)
+                    sources = await YTDLSource.create_source(ctx, url, playlist=True)
                     for source in sources:
                         if source is None:
                             await ctx.send('An error has occurred!\n'
@@ -357,7 +415,7 @@ class Jukebox(commands.Cog):
                     # Individual video
                     if '&list=' in url:
                         url = url[:url.find('&list=')]
-                    source = await YTDLSource.create_source(ctx, url, loop=self.bot.loop, playlist=False)
+                    source = await YTDLSource.create_source(ctx, url, playlist=False)
                     if source is None:
                         return await ctx.send('An error has occurred!\n'
                                               f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> '
@@ -553,11 +611,11 @@ class Jukebox(commands.Cog):
             await ctx.invoke(self.join_)
 
 
-async def setup(bot):
+async def setup(bot: commands.Bot):
     await bot.add_cog(Jukebox(bot))
     logger.info('Loaded music!')
 
 
-async def teardown(bot):
+async def teardown(bot: commands.Bot):
     await bot.remove_cog('Jukebox')
     logger.info('Unloaded music.')
