@@ -17,9 +17,12 @@ import os
 logger = logging.getLogger("glassbox")
 embed_color = 0x0033aa
 ytdl = yt_dlp.YoutubeDL({'format': 'bestaudio',
-                         'noplaylist': False,
                          'quiet': True,
                          'extract_flat': 'in_playlist'})
+ytdl1 = yt_dlp.YoutubeDL({'format': 'bestaudio',
+                          'quiet': True,
+                          'extract_flat': 'in_playlist',
+                          'playlist_items': '1:1'})
 
 if not os.path.exists('spotify_api_token.txt'):
     with open('spotify_api_token.txt', 'x') as f:
@@ -44,25 +47,26 @@ async def search_loop(bot: commands.Bot):
         # wait for next song, 5 minute timeout
         request = await search_queue.get()
         query = request.query
-
         loop = bot.loop
+
+        # Load Spotify lists
         if query.startswith('https://open.spotify.com/playlist/') \
            or query.startswith('https://open.spotify.com/album/'):
             if query.startswith('https://open.spotify.com/playlist/'):
-                # Spotify playlist
-                logger.debug('Saving Spotify playlist!')
+                logger.info('Parsing Spotify playlist')
                 playlist = spotify.playlist(query)
             elif query.startswith('https://open.spotify.com/album/'):
-                # Spotify album
-                logger.debug('Saving Spotify album!')
+                logger.info('Parsing Spotify album')
                 playlist = spotify.album(query)
 
+            logger.info(f'Downloading {len(playlist["tracks"]["items"])} parsed tracks')
             combined_tracks = []
             for track in playlist['tracks']['items']:
                 if 'track' in track:
                     track = track['track']
-                url = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
-                to_run = partial(ytdl.extract_info, url=url, download=False)
+                query = f'{track["artists"][0]["name"]} {track["name"]}'
+                query = f'https://www.youtube.com/results?search_query={"+".join(query.split())}'
+                to_run = partial(ytdl1.extract_info, url=query, download=False)
                 data = await loop.run_in_executor(None, to_run)
                 try:
                     data = data['entries'][0]
@@ -70,31 +74,32 @@ async def search_loop(bot: commands.Bot):
                     continue
                 combined_tracks.append(data)
 
-            search_results[request.key] = data
+            search_results[request.key] = (combined_tracks,
+                                           playlist['name'],
+                                           playlist['external_urls']['spotify'],
+                                           playlist['images'][0]['url'])
             request.flag.set()
             continue
 
+        # Convert single Spotify tracks to YouTube searches
         elif query.startswith('https://open.spotify.com/track/'):
-            # Individual Spotify track
-            logger.debug('Saving Spotify track!')
+            logger.info('Parsing Spotify track')
             track = spotify.track(query)
-            query = f'ytsearch:{track["artists"][0]["name"]} {track["name"]}'
-
-        if query.startswith('ytsearch:'):
-            # ytsearch is weird, use another format
-            query = query[9:]
+            query = f'{track["artists"][0]["name"]} {track["name"]}'
             query = f'https://www.youtube.com/results?search_query={"+".join(query.split())}'
-            with yt_dlp.YoutubeDL({'format': 'bestaudio',
-                                   'quiet': True,
-                                   'extract_flat': 'in_playlist',
-                                   'playlist_items': '1:1'}) as ytdl2:
-                to_run = partial(ytdl2.extract_info, url=query, download=False)
-        else:
+
+        # Load from URL
+        if query.startswith('https://www.youtube.com/playlist'):
+            logger.info(f'Downloading whole YouTube playlist: {query}')
             to_run = partial(ytdl.extract_info, url=query, download=False)
+        else:
+            logger.info(f'Downloading single YouTube track: {query}')
+            to_run = partial(ytdl1.extract_info, url=query, download=False)
         try:
             data = await loop.run_in_executor(None, to_run)
         except Exception:
             raise ValueError('Song not found.')
+
         search_results[request.key] = data
         request.flag.set()
         continue
@@ -133,36 +138,37 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         if search.startswith('https://open.spotify.com/playlist/') \
            or search.startswith('https://open.spotify.com/album/'):
+            # The format of data is ([sources], playlist_name, url, thumbnail_url)
             sources = []
-            for datum in data:
-                sources.append({'webpage_url': datum['webpage_url'],
+            for datum in data[0]:
+                sources.append({'webpage_url': datum['url'],
                                 'requester': ctx.author,
                                 'title': datum['title'],
-                                'thumbnail': datum['thumbnail'],
+                                'thumbnail': datum['thumbnails'][0]['url'],
                                 'duration': datum['duration']})
-            embed = discord.Embed(title='Album queued',
-                                  description=f'**[{playlist["name"]}]({playlist["external_urls"]["spotify"]})**\n'
+            embed = discord.Embed(title='Playlist queued',
+                                  description=f'**[{data[1]}]({data[2]})**\n'
                                   f'**{len(sources)} tracks**',
                                   color=embed_color)
-            embed.set_thumbnail(url=playlist['images'][0]['url'])
+            embed.set_thumbnail(url=data[3])
             await ctx.send(embed=embed)
             return sources
         if 'entries' in data:
             if playlist:
-                logger.debug('Saving playlist!')
+                logger.info('Saved playlist')
                 embed = discord.Embed(title='Playlist queued',
                                       description=f'**[{data["title"]}]({data["webpage_url"]})**\n'
                                       f'**{len(data["entries"])} tracks**',
                                       color=embed_color)
                 embed.set_thumbnail(url=data['thumbnails'][0]['url'])
                 await ctx.send(embed=embed)
-                return [{'webpage_url': datum['webpage_url'],
+                return [{'webpage_url': datum['url'],
                          'requester': ctx.author,
                          'title': datum['title'],
-                         'thumbnail': datum['thumbnail'],
+                         'thumbnail': datum['thumbnails'][0]['url'],
                          'duration': datum['duration']} for datum in data['entries']]
             else:
-                logger.debug('Saving video from search results!')
+                logger.info('Saved video from search results')
                 try:
                     data = data['entries'][0]
                 except IndexError:
@@ -180,7 +186,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                         'thumbnail': data['thumbnails'][0]['url'],
                         'duration': data['duration']}
         elif 'webpage_url' in data:
-            logger.debug('Saving video directly!')
+            logger.info('Saved video from URL')
             embed = discord.Embed(title='Song queued',
                                   description=f'**[{data["title"]}]({data["webpage_url"]})**\n'
                                   f'Length: **{data["duration"]//60}:{(data["duration"]%60):02d}**',
@@ -345,7 +351,7 @@ class Jukebox(commands.Cog):
 
         if not url.startswith('http://') and not url.startswith('https://'):
             # We have a non-URL, so a search query
-            url = f'ytsearch:{url}'
+            url = f'https://www.youtube.com/results?search_query={"+".join(url.split())}'
 
         async with ctx.typing():
             player = self.get_player(ctx)
