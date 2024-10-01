@@ -19,10 +19,10 @@ embed_color = 0x0033aa
 ytdl = yt_dlp.YoutubeDL({'format': 'bestaudio',
                          'quiet': True,
                          'extract_flat': 'in_playlist'})
-ytdl1 = yt_dlp.YoutubeDL({'format': 'bestaudio',
+ytdl2 = yt_dlp.YoutubeDL({'format': 'bestaudio',
                           'quiet': True,
                           'extract_flat': 'in_playlist',
-                          'playlist_items': '1:1'})
+                          'playlist_items': '1:2'})
 
 if not os.path.exists('spotify_api_token.txt'):
     with open('spotify_api_token.txt', 'x') as f:
@@ -66,12 +66,27 @@ async def search_loop(bot: commands.Bot):
                     track = track['track']
                 query = f'{track["artists"][0]["name"]} {track["name"]}'
                 query = f'https://www.youtube.com/results?search_query={"+".join(query.split())}'
-                to_run = partial(ytdl1.extract_info, url=query, download=False)
-                data = await loop.run_in_executor(None, to_run)
+                to_run = partial(ytdl2.extract_info, url=query, download=False)
+                results = await loop.run_in_executor(None, to_run)
+                # Attempt 1, see if the first search result works
                 try:
-                    data = data['entries'][0]
+                    data = results['entries'][0]
+                    if 'duration' not in data:
+                        data = {'error': yt_dlp.DownloadError(f'Song not found: {track["name"]}')}
                 except IndexError:
-                    continue
+                    data = {'error': yt_dlp.DownloadError(f'Song not found: {track["name"]}\n'
+                                                          f'Special Case 1: <@{bot.owner_id}>')}
+                # Attempt 2, see if the second search result works
+                if 'error' in data:
+                    try:
+                        data = results['entries'][1]
+                        if 'duration' not in data:
+                            data = {'error': yt_dlp.DownloadError(f'Song not found: {track["name"]}')}
+                    except IndexError:
+                        data = {'error': yt_dlp.DownloadError(f'Song not found: {track["name"]}\n'
+                                                              f'Special Case 2: <@{bot.owner_id}>')}
+                if 'error' in data:
+                    logger.warning(f'Song not found: {query}')
                 combined_tracks.append(data)
 
             search_results[request.key] = (combined_tracks,
@@ -94,11 +109,12 @@ async def search_loop(bot: commands.Bot):
             to_run = partial(ytdl.extract_info, url=query, download=False)
         else:
             logger.info(f'Downloading single YouTube track: {query}')
-            to_run = partial(ytdl1.extract_info, url=query, download=False)
+            to_run = partial(ytdl2.extract_info, url=query, download=False)
         try:
             data = await loop.run_in_executor(None, to_run)
-        except Exception:
-            raise ValueError('Song not found.')
+        except yt_dlp.DownloadError as e:
+            logger.warning(f'Song not found: {e}')
+            data = {'error': e}
 
         search_results[request.key] = data
         request.flag.set()
@@ -136,11 +152,18 @@ class YTDLSource(discord.PCMVolumeTransformer):
         del search_results[key]
         await search_msg.delete()
 
+        if 'error' in data:
+            # Something went wrong.
+            raise data['error']
+
         if search.startswith('https://open.spotify.com/playlist/') \
            or search.startswith('https://open.spotify.com/album/'):
             # The format of data is ([sources], playlist_name, url, thumbnail_url)
             sources = []
             for datum in data[0]:
+                if 'error' in datum:
+                    await ctx.reply(f'Sorry! {datum["error"]}')
+                    continue
                 sources.append({'webpage_url': datum['url'],
                                 'requester': ctx.author,
                                 'title': datum['title'],
@@ -172,7 +195,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 try:
                     data = data['entries'][0]
                 except IndexError:
-                    return
+                    raise yt_dlp.DownloadError('Song not found. \nSpecial Case 3!')
                 data['duration'] = int(data['duration'])
                 embed = discord.Embed(title='Song queued',
                                       description=f'**[{data["title"]}]({data["url"]})**\n'
@@ -378,13 +401,12 @@ class Jukebox(commands.Cog):
                     source = await YTDLSource.create_source(ctx, url, playlist=False)
                     if source is None:
                         return await ctx.send('An error has occurred!\n'
-                                              f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> '
-                                              'is trying to pin down.\nYour song has not been added to the queue. '
+                                              f'Your lucky day..! This is Mystery Error 2 <@{self.bot.owner_id}> is '
+                                              'trying to pin down.\nYour song has not been added to the queue. '
                                               'It\'s likely it couldn\'t be found.')
                     await player.queue.put(source)
-            except yt_dlp.utils.DownloadError:
-                await ctx.send('An error occurred in processing your song: If this is a Spotify link, Vitreum knows '
-                               'about this error, and he\'ll get to fixing that eventually.')
+            except yt_dlp.DownloadError as e:
+                await ctx.reply(e)
 
     @commands.command(name='playnext')
     async def playnext_(self, ctx: commands.Context, * song: str):
@@ -428,9 +450,8 @@ class Jukebox(commands.Cog):
                                               'is trying to pin down.\nYour song has not been added to the queue. '
                                               'It\'s likely it couldn\'t be found.')
                     await player.queue.put(source)
-            except yt_dlp.utils.DownloadError:
-                await ctx.send('An error occurred. If this is a Spotify link, Vitreum knows '
-                               'about this error, and he\'ll get to fixing that eventually.')
+            except yt_dlp.DownloadError as e:
+                await ctx.reply(e)
 
             for _ in range(q_size):
                 await player.queue.put(await player.queue.get())
