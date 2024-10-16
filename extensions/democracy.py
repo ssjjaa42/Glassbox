@@ -1,0 +1,119 @@
+# Helldivers 2 Updates for Glassbox
+import logging
+import os
+import json
+import asyncio
+import requests
+from discord.ext import commands
+
+logger = logging.getLogger('glassbox')
+
+settings_path = os.path.join(os.path.curdir, 'data', 'settings')
+if not os.path.exists(settings_path):
+    os.mkdir(settings_path)
+mailinglist_path = os.path.join(settings_path, 'democracy.json')
+if not os.path.exists(mailinglist_path):
+    with open(mailinglist_path, 'x') as f:
+        f.write('[]')
+
+# Initialize settings
+with open(mailinglist_path) as f:
+    hd2_mailinglist = json.load(f)
+
+stored_watched_planets = {}
+
+
+class Democracy(commands.Cog):
+    """Provide live Helldivers 2 updates."""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+        bot.loop.create_task(self.update_loop())
+
+    async def update_loop(self):
+        await self.bot.wait_until_ready()
+        global stored_watched_planets
+        while not self.bot.is_closed():
+            # Update current campaigns
+            response = requests.get('https://helldiverstrainingmanual.com/api/v1/war/campaign')
+            if response.status_code != 200:
+                logger.error('Something went wrong retrieving the Helldivers campaign progress.')
+                await asyncio.sleep(300)
+                continue
+            campaign = json.loads(response.content)
+            watched_planets = stored_watched_planets.copy()
+            stored_watched_planets.clear()
+            news = []
+            for planet in campaign:
+                # The planet is newly under siege
+                if planet['defense'] and planet['name'] not in watched_planets:
+                    news.append(f'**{planet["name"]}** is under siege by the **{planet["faction"]}**!')
+                # The planet is newly not under siege. But if it shows up here, then it was lost
+                elif planet['name'] in watched_planets \
+                        and not planet['defense'] and watched_planets[planet['name']]['defense']:
+                    news.append(f'**{planet["name"]}** was lost! It is now under the'
+                                f'control of the {planet["faction"]}')
+                stored_watched_planets[planet['name']] = planet
+            for planetName in watched_planets.keys():
+                # A campaign is complete
+                if planetName not in [p['name'] for p in campaign]:
+                    if watched_planets[planetName]['defense']:
+                        news.append(f'**{planetName}** was successfully defended!')
+                    elif watched_planets[planetName]['percentage'] > 99.5:
+                        news.append(f'**{planetName}** was liberated!')
+
+            # logger.debug(f'Galactic War Update: {news}')
+            news_str = '\n'.join(news)
+            if news_str:
+                for channel_id in hd2_mailinglist:
+                    await self.bot.get_channel(channel_id).send(news_str)
+
+            for planet in campaign:
+                stored_watched_planets[planet['name']] = planet
+            # logger.debug(stored_watched_planets.keys())
+
+            await asyncio.sleep(300)
+
+    @commands.group()
+    async def democracy(self, ctx: commands.Context):
+        pass
+
+    @democracy.command(name='enable')
+    async def enable_(self, ctx: commands.Context):
+        if not ctx.author.guild_permissions.administrator:
+            return await ctx.send('Administrator privileges are required to use this command.\n'
+                                  f'-# `{ctx.author.display_name} is not in the sudoers list. '
+                                  'This incident will be reported.`')
+        if ctx.channel.id not in hd2_mailinglist:
+            hd2_mailinglist.append(ctx.channel.id)
+            await ctx.send('Subscribed to **Strohmann News!**\n'
+                           '-# Approved by the Ministry of Truth')
+        else:
+            await ctx.send('You are already subscribed to **Strohmann News!**')
+
+    @democracy.command(name='disable')
+    async def disable_(self, ctx: commands.Context):
+        if not ctx.author.guild_permissions.administrator:
+            return await ctx.send('Administrator privileges are required to use this command.\n'
+                                  f'-# `{ctx.author.display_name} is not in the sudoers list. '
+                                  'This incident will be reported.`')
+        if ctx.channel.id in hd2_mailinglist:
+            hd2_mailinglist.remove(ctx.channel.id)
+            await ctx.send('Unsubscribed from **Strohmann News!**\n'
+                           '-# This action has been reported to your Democracy Officer.')
+        else:
+            await ctx.send('You wish to get further still from Managed Democracy? Do what you will.\n'
+                           '-# Watch your back, traitor.')
+
+
+async def setup(bot):
+    await bot.add_cog(Democracy(bot))
+    logger.info('Loaded Democracy!')
+
+
+async def teardown(bot):
+    with open(mailinglist_path, 'w') as file:
+        json.dump(hd2_mailinglist, file)
+    await bot.remove_cog('Democracy')
+    logger.info('Unloaded Democracy.')
