@@ -63,7 +63,7 @@ class Democracy(commands.Cog):
                     elif watched_planets[planetName]['percentage'] > 99.5:
                         news.append(f'**{planetName}** was liberated!')
 
-            logger.debug(f'Galactic War Update: {news}')
+            # logger.debug(f'Galactic War Update: {news}')
             news_str = '\n'.join(news)
             if news_str:
                 for channel_id in hd2_mailinglist:
@@ -71,7 +71,7 @@ class Democracy(commands.Cog):
 
             for planet in campaign:
                 stored_watched_planets[planet['name']] = planet
-            logger.debug(stored_watched_planets.keys())
+            # logger.debug(stored_watched_planets.keys())
 
             await asyncio.sleep(300)
 
