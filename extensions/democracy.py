@@ -52,8 +52,8 @@ class Democracy(commands.Cog):
                 # The planet is newly not under siege. But if it shows up here, then it was lost
                 elif planet['name'] in watched_planets \
                         and not planet['defense'] and watched_planets[planet['name']]['defense']:
-                    news.append(f'**{planet["name"]}** was lost! It is now under the'
-                                f'control of the {planet["faction"]}')
+                    news.append(f'**{planet["name"]}** was lost! It is now under the '
+                                f'control of the **{planet["faction"]}**!')
                 stored_watched_planets[planet['name']] = planet
             for planetName in watched_planets.keys():
                 # A campaign is complete
