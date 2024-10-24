@@ -14,11 +14,13 @@ if not os.path.exists(settings_path):
 mailinglist_path = os.path.join(settings_path, 'democracy.json')
 if not os.path.exists(mailinglist_path):
     with open(mailinglist_path, 'x') as f:
-        f.write('[]')
+        f.write('[0, []]')
 
 # Initialize settings
 with open(mailinglist_path) as f:
-    hd2_mailinglist = json.load(f)
+    raw_in = json.load(f)
+    last_update_time = raw_in[0]
+    hd2_mailinglist = raw_in[1]
 
 stored_watched_planets = {}
 
@@ -34,7 +36,25 @@ class Democracy(commands.Cog):
     async def update_loop(self):
         await self.bot.wait_until_ready()
         global stored_watched_planets
+        global last_update_time
         while not self.bot.is_closed():
+            news = []
+            # Update current news
+            response = requests.get(f'https://helldiverstrainingmanual.com/api/v1/war/news?from={last_update_time}')
+            if response.status_code != 200:
+                logger.error('Something went wrong retrieving the Helldivers campaign progress.')
+                await asyncio.sleep(300)
+                continue
+            raw_news = json.loads(response.content)
+            for n in raw_news:
+                last_update_time = n['published'] + 1
+                message = n['message']
+                message = message.replace('<i=3>', '**')
+                message = message.replace('<i=1>', '**')
+                message = message.replace('</i>', '**')
+                message = message + '\n'
+                news.append(message)
+
             # Update current campaigns
             response = requests.get('https://helldiverstrainingmanual.com/api/v1/war/campaign')
             if response.status_code != 200:
@@ -44,7 +64,6 @@ class Democracy(commands.Cog):
             campaign = json.loads(response.content)
             watched_planets = stored_watched_planets.copy()
             stored_watched_planets.clear()
-            news = []
             for planet in campaign:
                 # The planet is newly under siege
                 if planet['defense'] and planet['name'] not in watched_planets:
@@ -52,8 +71,8 @@ class Democracy(commands.Cog):
                 # The planet is newly not under siege. But if it shows up here, then it was lost
                 elif planet['name'] in watched_planets \
                         and not planet['defense'] and watched_planets[planet['name']]['defense']:
-                    news.append(f'**{planet["name"]}** was lost! It is now under the'
-                                f'control of the {planet["faction"]}')
+                    news.append(f'**{planet["name"]}** was lost! It is now under the '
+                                f'control of the **{planet["faction"]}**!')
                 stored_watched_planets[planet['name']] = planet
             for planetName in watched_planets.keys():
                 # A campaign is complete
@@ -63,15 +82,19 @@ class Democracy(commands.Cog):
                     elif watched_planets[planetName]['percentage'] > 99.5:
                         news.append(f'**{planetName}** was liberated!')
 
-            # logger.debug(f'Galactic War Update: {news}')
-            news_str = '\n'.join(news)
-            if news_str:
+            if len(news) > 0:
+                news_str = ''
+                while len(news) > 0:
+                    if len(news_str + news[0] + '\n') > 2000:
+                        for channel_id in hd2_mailinglist:
+                            await self.bot.get_channel(channel_id).send(news_str)
+                        news_str = ''
+                    news_str += news.pop(0) + '\n'
                 for channel_id in hd2_mailinglist:
                     await self.bot.get_channel(channel_id).send(news_str)
 
             for planet in campaign:
                 stored_watched_planets[planet['name']] = planet
-            # logger.debug(stored_watched_planets.keys())
 
             await asyncio.sleep(300)
 
@@ -114,6 +137,6 @@ async def setup(bot):
 
 async def teardown(bot):
     with open(mailinglist_path, 'w') as file:
-        json.dump(hd2_mailinglist, file)
+        json.dump([last_update_time, hd2_mailinglist], file)
     await bot.remove_cog('Democracy')
     logger.info('Unloaded Democracy.')
