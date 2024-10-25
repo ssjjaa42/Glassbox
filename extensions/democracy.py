@@ -46,15 +46,15 @@ class Democracy(commands.Cog):
                 await asyncio.sleep(300)
                 continue
             raw_news = json.loads(response.content)
-            current_update_time = last_update_time
             for n in raw_news:
-                current_update_time = n['published'] + 1
-                message = n['message']
-                message = message.replace('<i=3>', '**')
-                message = message.replace('<i=1>', '**')
-                message = message.replace('</i>', '**')
-                message = message + '\n'
-                news.append(message)
+                if n['published'] > last_update_time:
+                    last_update_time = n['published'] + 1
+                    message = n['message']
+                    message = message.replace('<i=3>', '**')
+                    message = message.replace('<i=1>', '**')
+                    message = message.replace('</i>', '**')
+                    message = message + '\n'
+                    news.append(message)
 
             # Update current campaigns
             response = requests.get('https://helldiverstrainingmanual.com/api/v1/war/campaign')
@@ -96,12 +96,6 @@ class Democracy(commands.Cog):
 
             for planet in campaign:
                 stored_watched_planets[planet['name']] = planet
-
-            # Save the time
-            if last_update_time != current_update_time:
-                with open(mailinglist_path, 'w') as file:
-                    json.dump([current_update_time, hd2_mailinglist], file)
-                last_update_time = current_update_time
 
             await asyncio.sleep(300)
 
