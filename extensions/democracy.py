@@ -66,9 +66,15 @@ class Democracy(commands.Cog):
             watched_planets = stored_watched_planets.copy()
             stored_watched_planets.clear()
             for planet in campaign:
+                # Correct API: "Illuminates" to "Illuminate"
+                if planet['faction'] == 'Illuminates':
+                    planet['faction'] = 'Illuminate'
                 # The planet is newly under siege
                 if planet['defense'] and planet['name'] not in watched_planets:
                     news.append(f'**{planet["name"]}** is under siege by the **{planet["faction"]}**!')
+                # The planet is under invasion
+                elif not planet['defense'] and planet['expireDateTime'] and planet['name'] not in watched_planets:
+                    news.append(f'**{planet["name"]}** is being invaded by the **{planet["faction"]}**!')
                 # The planet is newly not under siege. But if it shows up here, then it was lost
                 elif planet['name'] in watched_planets \
                         and not planet['defense'] and watched_planets[planet['name']]['defense']:
@@ -76,12 +82,25 @@ class Democracy(commands.Cog):
                                 f'control of the **{planet["faction"]}**!')
                 stored_watched_planets[planet['name']] = planet
             for planetName in watched_planets.keys():
-                # A campaign is complete
+                # The planet is no longer being fought over: A campaign is over
                 if planetName not in [p['name'] for p in campaign]:
+                    # The planet was formerly a defense: The defense is complete
                     if watched_planets[planetName]['defense']:
-                        news.append(f'**{planetName}** was successfully defended!')
+                        news.append(f'**{planetName}** was successfully defended from the '
+                                    f'{watched_planets[planetName]["faction"]}!')
+                    # The planet was under invasion
+                    elif not watched_planets[planetName]['defense'] and watched_planets[planetName]['expireDateTime']:
+                        # The percentage was ~100%: The invasion was repelled
+                        if watched_planets[planetName]['percentage'] > 99.5:
+                            news.append(f'The {watched_planets[planetName]["faction"]} invasion of **{planetName}** '
+                                        f'was repelled!')
+                        else:
+                            news.append(f'The {watched_planets[planetName]["faction"]} completed their invasion '
+                                        f'of {planetName}!')
+                    # The planet is ~100% liberated: The liberation is complete
                     elif watched_planets[planetName]['percentage'] > 99.5:
-                        news.append(f'**{planetName}** was liberated!')
+                        news.append(f'**{planetName}** was liberated from the '
+                                    f'{watched_planets[planetName]["faction"]}!')
 
             if len(news) > 0:
                 news_str = ''
