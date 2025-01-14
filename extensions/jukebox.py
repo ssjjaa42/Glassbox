@@ -278,6 +278,13 @@ class MusicPlayer:
             while True:
                 source.volume = self.volume
                 self.current = source
+                if not self.__guild.voice_client:
+                    logger.error('Attempted to play from source but voice_client was None!')
+                    try:
+                        source.cleanup()
+                    except ValueError:
+                        pass
+                    return self.destroy(self.__guild)
                 self.__guild.voice_client.play(source,
                                                after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
                 embed = discord.Embed(title='Now playing',
