@@ -52,13 +52,16 @@ last_edit = {}
 async def on_ready():
     """Boot actions. Set game and status.
 
-    This should only run once. I'm not sure if it actually will, though.
+    This should only run once. May run additional times if connection to discord is lost.
     """
     logger.info(f'Connected as {glass.user}!')
     with open(extensions_config_path) as file:
         extensions_to_load = json.load(file)
     for extension in extensions_to_load:
-        await glass.load_extension(f'extensions.{extension}')
+        try:
+            await glass.load_extension(f'extensions.{extension}')
+        except commands.errors.ExtensionAlreadyLoaded:
+            logger.error(f'Attempted to load extensions.{extension}, but extensions.{extension} already loaded')
     game = discord.Activity(type=discord.ActivityType.watching, name='myself think', state='It\'s dark in here')
     await glass.change_presence(status=discord.Status.do_not_disturb, activity=game)
 
