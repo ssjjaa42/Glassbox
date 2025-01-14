@@ -175,7 +175,11 @@ async def on_message(message: discord.Message):
         # If you want a COMMAND to not run in forbidden channels, please check ctx.channel.id in the command.
         # The process_commands should not be run in ANY other checks, or else it will genuinely run commands multiple
         # times.
-        await glass.process_commands(message)
+        try:
+            message.content = message.content.replace('’', '\'')
+            await glass.process_commands(message)
+        except commands.errors.UnexpectedQuoteError:
+            await message.reply('Error: Invalid character in command.')
         return
 
     # Try responding automatically
@@ -256,7 +260,11 @@ async def on_message(message: discord.Message):
         logger.warning('Tried to react with unknown emoji! Am I in the server that has it?')
 
     # Mandatory line to make commands work
-    await glass.process_commands(message)
+    try:
+        message.content = message.content.replace('’', '\'')
+        await glass.process_commands(message)
+    except commands.errors.UnexpectedQuoteError:
+        await message.reply('Error: Invalid character in command.')
 
 if __name__ == '__main__':
     if not os.path.exists('token.txt'):
