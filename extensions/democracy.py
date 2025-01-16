@@ -87,20 +87,20 @@ class Democracy(commands.Cog):
                     # The planet was formerly a defense: The defense is complete
                     if watched_planets[planetName]['defense']:
                         news.append(f'**{planetName}** was successfully defended from the '
-                                    f'{watched_planets[planetName]["faction"]}!')
+                                    f'**{watched_planets[planetName]["faction"]}**!')
                     # The planet was under invasion
                     elif not watched_planets[planetName]['defense'] and watched_planets[planetName]['expireDateTime']:
                         # The percentage was ~100%: The invasion was repelled
                         if watched_planets[planetName]['percentage'] > 99.5:
-                            news.append(f'The {watched_planets[planetName]["faction"]} invasion of **{planetName}** '
-                                        f'was repelled!')
+                            news.append(f'The **{watched_planets[planetName]["faction"]}** invasion of '
+                                        f'**{planetName}** was repelled!')
                         else:
-                            news.append(f'The {watched_planets[planetName]["faction"]} completed their invasion '
-                                        f'of {planetName}!')
+                            news.append(f'The **{watched_planets[planetName]["faction"]}** completed their invasion '
+                                        f'of **{planetName}**!')
                     # The planet is ~100% liberated: The liberation is complete
                     elif watched_planets[planetName]['percentage'] > 99.5:
                         news.append(f'**{planetName}** was liberated from the '
-                                    f'{watched_planets[planetName]["faction"]}!')
+                                    f'**{watched_planets[planetName]["faction"]}**!')
 
             if len(news) > 0:
                 news_str = ''
