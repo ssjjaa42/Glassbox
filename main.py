@@ -11,8 +11,7 @@ from discord.ext import commands
 import modules.settings as settings
 # import modules.script as script
 
-intents = discord.Intents.default()
-intents.message_content = True
+intents = discord.Intents.all()
 glass = commands.Bot(command_prefix='$', intents=intents)
 
 if not os.path.exists(os.path.join(os.path.curdir, 'logs')):
