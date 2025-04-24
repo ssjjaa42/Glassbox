@@ -201,14 +201,17 @@ class DiscordTTS(commands.Cog):
         if ctx.guild.id not in guild_user_voice_mappings:
             guild_user_voice_mappings[ctx.guild.id] = {}
 
-        # TODO text to speech
         try:
             voice = guild_user_voice_mappings[ctx.guild.id][ctx.author.id]
         except KeyError:
             voice = 'Brian'
 
+        clean_words = []
+        for w in text.split():
+            if not w.startswith('http') and not w.startswith('<') and len(w) < 20:
+                clean_words.append(w)
+        clean_text = ' '.join(clean_words)
         forbidden_characters = '#@/\\:'
-        clean_text = text
         for c in forbidden_characters:
             clean_text = clean_text.replace(c, ' ')
 
