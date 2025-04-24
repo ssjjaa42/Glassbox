@@ -5,6 +5,7 @@ import asyncio
 import discord
 from discord.ext import commands
 import requests
+from samtts import SamTTS
 
 
 logger = logging.getLogger("glassbox")
@@ -25,6 +26,9 @@ guild_user_channel_bindings = {}
 with open(voice_settings_path) as f:
     guild_user_voice_mappings = json.load(f)
 
+streamelements_voices = ['Amy', 'Brian', 'Emma', 'Geraint']
+sam_voices = ['Sam', 'Alien', 'Robot']
+
 
 class TTSSource(discord.FFmpegPCMAudio):
     def __init__(self, source: str):
@@ -32,11 +36,19 @@ class TTSSource(discord.FFmpegPCMAudio):
 
     @classmethod
     async def create_source(cls, ctx: commands.Context, text: str, voice: str):
-        # TODO different voices
         filepath = os.path.join(tmp_folder_path, f'{voice}_{text}_{ctx.__hash__()}.mp3')
-        tts = requests.get('https://api.streamelements.com/kappa/v2/speech?', {'voice': voice, 'text': text}).content
-        with open(filepath, 'xb') as file:
-            file.write(tts)
+        if voice in streamelements_voices:
+            tts = requests.get('https://api.streamelements.com/kappa/v2/speech?', {'voice': voice, 'text': text})\
+                .content
+            with open(filepath, 'xb') as file:
+                file.write(tts)
+        elif voice in sam_voices:
+            if voice == 'Sam':
+                SamTTS().save(text, filepath)
+            elif voice == 'Alien':
+                SamTTS(100, 64, 200, 150).save(text, filepath)
+            elif voice == 'Robot':
+                SamTTS(92, 60, 190, 190).save(text, filepath)
         return filepath
 
 
@@ -74,6 +86,10 @@ class TTSPlayer:
                     return self.destroy(self.__guild)
 
                 # play the file
+                for v in sam_voices:
+                    print(sourcepath.split('/')[-1])
+                    if sourcepath.split('/')[-1].startswith(v):
+                        source = discord.PCMVolumeTransformer(source, volume=0.3)
                 self.__guild.voice_client.play(source,
                                                after=lambda _: self.bot.loop.call_soon_threadsafe(self.next.set))
 
@@ -159,10 +175,9 @@ class DiscordTTS(commands.Cog):
 
     @tts.command(name='voices')
     async def voices_(self, ctx: commands.Context):
-        await ctx.reply('Brian\n'
-                        'Amy\n'
-                        'Emma\n'
-                        'Geraint')
+        response = '\n'.join(streamelements_voices) + '\n'
+        response += '\n'.join(sam_voices)
+        await ctx.reply(response)
 
     @tts.command(name='setvoice')
     async def voice_(self, ctx: commands.Context, *, voice: str):
@@ -171,11 +186,7 @@ class DiscordTTS(commands.Cog):
             guild_user_voice_mappings[ctx.guild.id] = {}
 
         voice = voice.lower().capitalize()
-        voices = ['Brian',
-                  'Amy',
-                  'Emma',
-                  'Geraint']
-        if voice not in voices:
+        if voice not in streamelements_voices and voice not in sam_voices:
             return await ctx.reply('Invalid voice option! To view a complete list, do $tts voices.')
 
         # set user voice mapping
