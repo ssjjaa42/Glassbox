@@ -36,7 +36,7 @@ class TTSSource(discord.FFmpegPCMAudio):
 
     @classmethod
     async def create_source(cls, ctx: commands.Context, text: str, voice: str):
-        filepath = os.path.join(tmp_folder_path, f'{voice}_{text}_{ctx.__hash__()}.mp3')
+        filepath = os.path.join(tmp_folder_path, f'{voice}_{text[0:20]}_{ctx.__hash__()}.mp3')
         if voice in streamelements_voices:
             tts = requests.get('https://api.streamelements.com/kappa/v2/speech?', {'voice': voice, 'text': text})\
                 .content
