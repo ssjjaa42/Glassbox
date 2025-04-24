@@ -265,9 +265,13 @@ class DiscordTTS(commands.Cog):
              and message.author.voice and message.author.voice.channel:
                 # wait a half second -- then check to see if the message still exists (looking at you, pluralkit)
                 await asyncio.sleep(0.5)
-                if message and message.content[0] not in '!$%^&?/':
-                    await self.say_(commands.Context(message=message, bot=self.bot, view=None),
-                                    text=message.clean_content)
+                try:
+                    message.to_reference()
+                    if message.content[0] not in '!$%^&?/\\':
+                        await self.say_(commands.Context(message=message, bot=self.bot, view=None),
+                                        text=message.clean_content)
+                except discord.HTTPException:
+                    pass
         except KeyError:
             pass
 
