@@ -87,7 +87,6 @@ class TTSPlayer:
 
                 # play the file
                 for v in sam_voices:
-                    print(sourcepath.split('/')[-1])
                     if sourcepath.split('/')[-1].startswith(v):
                         source = discord.PCMVolumeTransformer(source, volume=0.3)
                 self.__guild.voice_client.play(source,
