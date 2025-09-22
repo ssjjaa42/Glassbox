@@ -116,6 +116,7 @@ class Democracy(commands.Cog):
             # for planet in campaign:
             #     stored_watched_planets[planet['name']] = planet
 
+            save_hd2_data()
             await asyncio.sleep(300)
 
     @commands.group()
@@ -130,6 +131,7 @@ class Democracy(commands.Cog):
                                   'This incident will be reported.`')
         if ctx.channel.id not in hd2_mailinglist:
             hd2_mailinglist.append(ctx.channel.id)
+            save_hd2_data()
             await ctx.send('Subscribed to **Strohmann News!**\n'
                            '-# Approved by the Ministry of Truth')
         else:
@@ -143,11 +145,17 @@ class Democracy(commands.Cog):
                                   'This incident will be reported.`')
         if ctx.channel.id in hd2_mailinglist:
             hd2_mailinglist.remove(ctx.channel.id)
+            save_hd2_data()
             await ctx.send('Unsubscribed from **Strohmann News!**\n'
                            '-# This action has been reported to your Democracy Officer.')
         else:
             await ctx.send('You wish to get further still from Managed Democracy? Do what you will.\n'
                            '-# Watch your back, traitor.')
+
+
+def save_hd2_data():
+    with open(mailinglist_path, 'w') as file:
+        json.dump([last_update_time, hd2_mailinglist], file)
 
 
 async def setup(bot):
@@ -156,7 +164,6 @@ async def setup(bot):
 
 
 async def teardown(bot):
-    with open(mailinglist_path, 'w') as file:
-        json.dump([last_update_time, hd2_mailinglist], file)
+    save_hd2_data()
     await bot.remove_cog('Democracy')
     logger.info('Unloaded Democracy.')
