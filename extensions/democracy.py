@@ -14,13 +14,14 @@ if not os.path.exists(settings_path):
 mailinglist_path = os.path.join(settings_path, 'democracy.json')
 if not os.path.exists(mailinglist_path):
     with open(mailinglist_path, 'x') as f:
-        f.write('[0, []]')
+        f.write('[0, 0, []]')
 
 # Initialize settings
 with open(mailinglist_path) as f:
     raw_in = json.load(f)
     last_update_time = raw_in[0]
-    hd2_mailinglist = raw_in[1]
+    last_dispatch_id = raw_in[1]
+    hd2_mailinglist = raw_in[2]
 
 stored_watched_planets = {}
 
@@ -37,22 +38,26 @@ class Democracy(commands.Cog):
         await self.bot.wait_until_ready()
         global stored_watched_planets
         global last_update_time
+        global last_dispatch_id
         while not self.bot.is_closed():
             news = []
             # Update current news
-            response = requests.get(f'https://helldiverstrainingmanual.com/api/v1/war/news?from={last_update_time}')
+            response = requests.get(f'https://api.helldivers2.dev/api/v2/dispatches', headers={
+                'X-Super-Client': 'Glassbox',
+                'X-Super-Contact': 'https://github.com/ssjjaa42/Glassbox'
+                })
             if response.status_code != 200:
                 logger.error('Something went wrong retrieving the Helldivers campaign progress.')
                 await asyncio.sleep(300)
                 continue
             raw_news = json.loads(response.content)
-            for n in raw_news:
-                if n['published'] > last_update_time:
-                    last_update_time = n['published'] + 1
+            for n in reversed(raw_news):
+                if n['id'] > last_dispatch_id:
+                    last_dispatch_id = n['id']
                     message = n['message']
-                    message = message.replace('<i=3>', '**')
-                    message = message.replace('<i=1>', '**')
-                    message = message.replace('</i>', '**')
+                    message = message.replace('<span data-ah=\"3\">', '**')
+                    message = message.replace('<span data-ah=\"1\">', '**')
+                    message = message.replace('</span>', '**')
                     message = message + '\n'
                     news.append(message)
 
@@ -155,7 +160,7 @@ class Democracy(commands.Cog):
 
 def save_hd2_data():
     with open(mailinglist_path, 'w') as file:
-        json.dump([last_update_time, hd2_mailinglist], file)
+        json.dump([last_update_time, last_dispatch_id, hd2_mailinglist], file)
 
 
 async def setup(bot):
