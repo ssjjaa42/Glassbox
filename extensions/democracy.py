@@ -42,12 +42,19 @@ class Democracy(commands.Cog):
         while not self.bot.is_closed():
             news = []
             # Update current news
-            response = requests.get(f'https://api.helldivers2.dev/api/v2/dispatches', headers={
-                'X-Super-Client': 'Glassbox',
-                'X-Super-Contact': 'https://github.com/ssjjaa42/Glassbox'
-                })
+            try:
+                response = requests.get('https://api.helldivers2.dev/api/v2/dispatches', headers={
+                    'X-Super-Client': 'Glassbox',
+                    'X-Super-Contact': 'https://github.com/ssjjaa42/Glassbox'
+                    })
+            except requests.exceptions.ChunkedEncodingError as e:
+                logger.error(f'Something went wrong retrieving the Helldivers campaign progress: '
+                             f'{e}')
+                await asyncio.sleep(300)
+                continue
             if response.status_code != 200:
-                logger.error('Something went wrong retrieving the Helldivers campaign progress.')
+                logger.error(f'Something went wrong retrieving the Helldivers campaign progress: '
+                             f'Received unexpected status code {response.status_code}')
                 await asyncio.sleep(300)
                 continue
             raw_news = json.loads(response.content)
@@ -61,52 +68,6 @@ class Democracy(commands.Cog):
                     message = message + '\n'
                     news.append(message)
 
-            # Update current campaigns
-            # response = requests.get('https://helldiverstrainingmanual.com/api/v1/war/campaign')
-            # if response.status_code != 200:
-            #     logger.error('Something went wrong retrieving the Helldivers campaign progress.')
-            #     await asyncio.sleep(300)
-            #     continue
-            # campaign = json.loads(response.content)
-            # watched_planets = stored_watched_planets.copy()
-            # stored_watched_planets.clear()
-            # for planet in campaign:
-            #     # Correct API: "Illuminates" to "Illuminate"
-            #     if planet['faction'] == 'Illuminates':
-            #         planet['faction'] = 'Illuminate'
-            #     # The planet is newly under siege
-            #     if planet['defense'] and planet['name'] not in watched_planets:
-            #         news.append(f'**{planet["name"]}** is under siege by the **{planet["faction"]}**!')
-            #     # The planet is under invasion
-            #     elif not planet['defense'] and planet['expireDateTime'] and planet['name'] not in watched_planets:
-            #         news.append(f'**{planet["name"]}** is being invaded by the **{planet["faction"]}**!')
-            #     # The planet is newly not under siege. But if it shows up here, then it was lost
-            #     elif planet['name'] in watched_planets \
-            #             and not planet['defense'] and watched_planets[planet['name']]['defense']:
-            #         news.append(f'**{planet["name"]}** was lost! It is now under the '
-            #                     f'control of the **{planet["faction"]}**!')
-            #     stored_watched_planets[planet['name']] = planet
-            # for planetName in watched_planets.keys():
-            #     # The planet is no longer being fought over: A campaign is over
-            #     if planetName not in [p['name'] for p in campaign]:
-            #         # The planet was formerly a defense: The defense is complete
-            #         if watched_planets[planetName]['defense']:
-            #             news.append(f'**{planetName}** was successfully defended from the '
-            #                         f'**{watched_planets[planetName]["faction"]}**!')
-            #         # The planet was under invasion
-            #         elif not watched_planets[planetName]['defense'] and watched_planets[planetName]['expireDateTime']:
-            #             # The percentage was ~100%: The invasion was repelled
-            #             if watched_planets[planetName]['percentage'] > 99.5:
-            #                 news.append(f'The **{watched_planets[planetName]["faction"]}** invasion of '
-            #                             f'**{planetName}** was repelled!')
-            #             else:
-            #                 news.append(f'The **{watched_planets[planetName]["faction"]}** completed their invasion '
-            #                             f'of **{planetName}**!')
-            #         # The planet is ~100% liberated: The liberation is complete
-            #         elif watched_planets[planetName]['percentage'] > 99.5:
-            #             news.append(f'**{planetName}** was liberated from the '
-            #                         f'**{watched_planets[planetName]["faction"]}**!')
-
             if len(news) > 0:
                 news_str = ''
                 while len(news) > 0:
@@ -117,9 +78,6 @@ class Democracy(commands.Cog):
                     news_str += news.pop(0) + '\n'
                 for channel_id in hd2_mailinglist:
                     await self.bot.get_channel(channel_id).send(news_str)
-
-            # for planet in campaign:
-            #     stored_watched_planets[planet['name']] = planet
 
             save_hd2_data()
             await asyncio.sleep(300)
