@@ -47,7 +47,7 @@ class Democracy(commands.Cog):
                     'X-Super-Client': 'Glassbox',
                     'X-Super-Contact': 'https://github.com/ssjjaa42/Glassbox'
                     })
-            except requests.exceptions.ChunkedEncodingError as e:
+            except Exception as e:
                 logger.error(f'Something went wrong retrieving the Helldivers campaign progress: '
                              f'{e}')
                 await asyncio.sleep(300)
