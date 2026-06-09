@@ -47,6 +47,7 @@ class Democracy(commands.Cog):
                     'X-Super-Client': 'Glassbox',
                     'X-Super-Contact': 'https://github.com/ssjjaa42/Glassbox'
                     })
+                raw_news = json.loads(response.content)
             except Exception as e:
                 logger.error(f'Something went wrong retrieving the Helldivers campaign progress: '
                              f'{e}')
@@ -57,7 +58,6 @@ class Democracy(commands.Cog):
                              f'Received unexpected status code {response.status_code}')
                 await asyncio.sleep(300)
                 continue
-            raw_news = json.loads(response.content)
             for n in reversed(raw_news):
                 if n['id'] > last_dispatch_id:
                     last_dispatch_id = n['id']
